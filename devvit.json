@@ -1,0 +1,186 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "assistantbot-rb",
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "triggers": {
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onAppUpgrade": "/internal/triggers/on-app-upgrade",
+    "onPostSubmit": "/internal/triggers/on-post-submit",
+    "onPostFlairUpdate": "/internal/triggers/on-post-flair-update"
+  },
+  "scheduler": {
+    "tasks": {
+      "artemis-check-submitted-post": {
+        "endpoint": "/internal/scheduler/artemis-check-submitted-post"
+      },
+      "artemis-reconcile-filtered-posts": {
+        "endpoint": "/internal/scheduler/artemis-reconcile-filtered-posts",
+        "cron": "*/15 * * * *"
+      },
+      "artemis-record-daily-stats": {
+        "endpoint": "/internal/scheduler/artemis-record-daily-stats",
+        "cron": "5 0 * * *"
+      },
+      "artemis-record-monthly-stats": {
+        "endpoint": "/internal/scheduler/artemis-record-monthly-stats",
+        "cron": "30 0 1 * *"
+      }
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "permissions": {
+    "reddit": {
+      "enable": true,
+      "scope": "moderator"
+    },
+    "redis": true
+  },
+  "settings": {
+    "subreddit": {
+      "flair_enforcement_enabled": {
+        "type": "boolean",
+        "label": "Enable Flair Enforcement",
+        "helpText": "When disabled, Artemis will not remind users about missing post flair or remove unflaired posts."
+      },
+      "flair_enforce_moderators": {
+        "type": "boolean",
+        "label": "Enforce Flair on Moderator Posts",
+        "helpText": "Apply flair enforcement to posts made by subreddit moderators."
+      },
+      "flair_enforce_approve_posts": {
+        "type": "boolean",
+        "label": "Approve Flaired Posts",
+        "helpText": "Approve posts that Artemis removed once they receive an allowed flair."
+      },
+      "flair_enforce_custom_message": {
+        "type": "paragraph",
+        "label": "Custom Flair Reminder Message",
+        "helpText": "Optional moderator-provided text included in flair reminder messages. Messages over 500 characters are truncated."
+      },
+      "flair_enforce_whitelist": {
+        "type": "paragraph",
+        "label": "Flair Enforcement Whitelist",
+        "helpText": "Optional usernames to skip, separated by commas or new lines. Do not include u/."
+      },
+      "flair_tag_nsfw": {
+        "type": "paragraph",
+        "label": "NSFW Flair Template IDs",
+        "helpText": "Optional post flair template IDs that should mark matching posts as NSFW. Separate IDs with commas or new lines."
+      },
+      "flair_tag_spoiler": {
+        "type": "paragraph",
+        "label": "Spoiler Flair Template IDs",
+        "helpText": "Optional post flair template IDs that should mark matching posts as spoilers. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_1_ids": {
+        "type": "paragraph",
+        "label": "Scheduled Flair Rule 1 IDs",
+        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_1_days": {
+        "type": "multiSelect",
+        "label": "Scheduled Flair Rule 1 Days",
+        "helpText": "Weekdays when Rule 1 flair IDs are allowed.",
+        "options": [
+          { "label": "Sunday", "value": "Sun" },
+          { "label": "Monday", "value": "Mon" },
+          { "label": "Tuesday", "value": "Tue" },
+          { "label": "Wednesday", "value": "Wed" },
+          { "label": "Thursday", "value": "Thu" },
+          { "label": "Friday", "value": "Fri" },
+          { "label": "Saturday", "value": "Sat" }
+        ]
+      },
+      "flair_schedule_rule_2_ids": {
+        "type": "paragraph",
+        "label": "Scheduled Flair Rule 2 IDs",
+        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_2_days": {
+        "type": "multiSelect",
+        "label": "Scheduled Flair Rule 2 Days",
+        "helpText": "Weekdays when Rule 2 flair IDs are allowed.",
+        "options": [
+          { "label": "Sunday", "value": "Sun" },
+          { "label": "Monday", "value": "Mon" },
+          { "label": "Tuesday", "value": "Tue" },
+          { "label": "Wednesday", "value": "Wed" },
+          { "label": "Thursday", "value": "Thu" },
+          { "label": "Friday", "value": "Fri" },
+          { "label": "Saturday", "value": "Sat" }
+        ]
+      },
+      "flair_schedule_rule_3_ids": {
+        "type": "paragraph",
+        "label": "Scheduled Flair Rule 3 IDs",
+        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_3_days": {
+        "type": "multiSelect",
+        "label": "Scheduled Flair Rule 3 Days",
+        "helpText": "Weekdays when Rule 3 flair IDs are allowed.",
+        "options": [
+          { "label": "Sunday", "value": "Sun" },
+          { "label": "Monday", "value": "Mon" },
+          { "label": "Tuesday", "value": "Tue" },
+          { "label": "Wednesday", "value": "Wed" },
+          { "label": "Thursday", "value": "Thu" },
+          { "label": "Friday", "value": "Fri" },
+          { "label": "Saturday", "value": "Sat" }
+        ]
+      },
+      "flair_schedule_rule_4_ids": {
+        "type": "paragraph",
+        "label": "Scheduled Flair Rule 4 IDs",
+        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_4_days": {
+        "type": "multiSelect",
+        "label": "Scheduled Flair Rule 4 Days",
+        "helpText": "Weekdays when Rule 4 flair IDs are allowed.",
+        "options": [
+          { "label": "Sunday", "value": "Sun" },
+          { "label": "Monday", "value": "Mon" },
+          { "label": "Tuesday", "value": "Tue" },
+          { "label": "Wednesday", "value": "Wed" },
+          { "label": "Thursday", "value": "Thu" },
+          { "label": "Friday", "value": "Fri" },
+          { "label": "Saturday", "value": "Sat" }
+        ]
+      },
+      "flair_schedule_rule_5_ids": {
+        "type": "paragraph",
+        "label": "Scheduled Flair Rule 5 IDs",
+        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+      },
+      "flair_schedule_rule_5_days": {
+        "type": "multiSelect",
+        "label": "Scheduled Flair Rule 5 Days",
+        "helpText": "Weekdays when Rule 5 flair IDs are allowed.",
+        "options": [
+          { "label": "Sunday", "value": "Sun" },
+          { "label": "Monday", "value": "Mon" },
+          { "label": "Tuesday", "value": "Tue" },
+          { "label": "Wednesday", "value": "Wed" },
+          { "label": "Thursday", "value": "Thu" },
+          { "label": "Friday", "value": "Fri" },
+          { "label": "Saturday", "value": "Sat" }
+        ]
+      },
+      "custom_goodbye": {
+        "type": "string",
+        "label": "Custom Goodbye",
+        "helpText": "Optional short sign-off used in flair reminder messages. Values over 20 characters are truncated."
+      }
+    }
+  },
+  "dev": {
+    "subreddit": "assistantbot_rb_dev"
+  }
+}
