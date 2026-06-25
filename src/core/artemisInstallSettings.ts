@@ -2,6 +2,7 @@ import { settings } from '@devvit/web/server';
 
 export type ArtemisInstallSettings = {
   flair_enforcement_enabled?: boolean;
+  flair_enforce_remove_posts?: boolean;
   flair_enforce_moderators?: boolean;
   flair_enforce_approve_posts?: boolean;
   flair_enforce_custom_message?: string;

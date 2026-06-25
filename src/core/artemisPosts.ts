@@ -17,7 +17,7 @@ import { ARTEMIS_JOBS, ARTEMIS_SETTINGS } from './artemisSettings';
 import { toT3 } from './artemisIds';
 import { loadSubredditConfig } from './artemisConfig';
 import { applyConfiguredFlairTags, collatePublicPostFlairs, isFlairAllowedToday, postHasFlair } from './artemisFlair';
-import { getAppModPermissions, hasPermission, isUserModerator } from './artemisModeration';
+import { isUserModerator } from './artemisModeration';
 import {
   deleteFilteredPost,
   getFilteredPost,
@@ -254,20 +254,17 @@ export async function handlePostSubmitted(params: {
         return;
       }
 
-      const permissions = await getAppModPermissions(subredditName);
-      if (hasPermission(permissions, 'posts')) {
-        await reddit.remove(postId, false);
-        await markStatsPostRemoved(postId);
-        await sendScheduleRemovalNotice(
-          post,
-          authorName,
-          subredditName,
-          post.linkFlair?.text || 'this flair',
-          schedule.permittedDays,
-          schedule.currentWeekday
-        );
-        await recordAction('Removed unscheduled post', { postId });
-      }
+      await reddit.remove(postId, false);
+      await markStatsPostRemoved(postId);
+      await sendScheduleRemovalNotice(
+        post,
+        authorName,
+        subredditName,
+        post.linkFlair?.text || 'this flair',
+        schedule.permittedDays,
+        schedule.currentWeekday
+      );
+      await recordAction('Removed unscheduled post', { postId });
     }
     await applyConfiguredFlairTags(postId, flairTemplateId, config);
     return;
@@ -291,28 +288,26 @@ export async function handlePostSubmitted(params: {
     return;
   }
 
-  const permissions = await getAppModPermissions(subredditName);
-  const canRemove = hasPermission(permissions, 'posts');
-  let removed = false;
-  let removalNotice = '';
+  const shouldRemove = config.flair_enforce_remove_posts;
+  const removalNotice = shouldRemove
+    ? config.flair_enforce_approve_posts
+      ? MSG_USER_FLAIR_REMOVAL
+      : MSG_USER_FLAIR_REMOVAL_NO_APPROVE
+    : '';
 
-  if (canRemove) {
-    await saveFilteredPost({
-      postId,
-      subredditName,
-      authorName,
-      title: post.title,
-      permalink: post.permalink,
-      createdAt: post.createdAt,
-      recordedAt: nowSeconds(),
-      removed: true,
-    });
+  await saveFilteredPost({
+    postId,
+    subredditName,
+    authorName,
+    title: post.title,
+    permalink: post.permalink,
+    createdAt: post.createdAt,
+    recordedAt: nowSeconds(),
+    removed: shouldRemove,
+  });
+  if (shouldRemove) {
     await reddit.remove(postId, false);
     await markStatsPostRemoved(postId);
-    removed = true;
-    removalNotice = config.flair_enforce_approve_posts
-      ? MSG_USER_FLAIR_REMOVAL
-      : MSG_USER_FLAIR_REMOVAL_NO_APPROVE;
     await recordAction('Removed post', { postId });
   } else {
     await recordAction('Sent flair reminder', { postId });
@@ -331,18 +326,6 @@ export async function handlePostSubmitted(params: {
     config.custom_goodbye || randomGoodbye()
   );
 
-  if (!removed) {
-    await saveFilteredPost({
-      postId,
-      subredditName,
-      authorName,
-      title: post.title,
-      permalink: post.permalink,
-      createdAt: post.createdAt,
-      recordedAt: nowSeconds(),
-      removed: false,
-    });
-  }
 }
 
 export async function checkSubmittedPost(postId: string, subredditName: string): Promise<void> {
@@ -383,27 +366,22 @@ export async function handlePostFlairUpdated(params: {
       return;
     }
 
-    const permissions = await getAppModPermissions(subredditName);
-    if (hasPermission(permissions, 'posts')) {
-      await reddit.remove(postId, false);
-      await markStatsPostRemoved(postId);
-      await sendScheduleRemovalNotice(
-        post,
-        record.authorName,
-        subredditName,
-        post.linkFlair?.text || 'this flair',
-        schedule.permittedDays,
-        schedule.currentWeekday
-      );
-      await deleteFilteredPost(postId);
-      await recordAction('Removed unscheduled post', { postId });
-    }
+    await reddit.remove(postId, false);
+    await markStatsPostRemoved(postId);
+    await sendScheduleRemovalNotice(
+      post,
+      record.authorName,
+      subredditName,
+      post.linkFlair?.text || 'this flair',
+      schedule.permittedDays,
+      schedule.currentWeekday
+    );
+    await deleteFilteredPost(postId);
+    await recordAction('Removed unscheduled post', { postId });
     return;
   }
 
-  const permissions = await getAppModPermissions(subredditName);
-  const shouldApprove = config.flair_enforce_approve_posts && hasPermission(permissions, 'posts');
-  if (record.removed && shouldApprove) {
+  if (record.removed && config.flair_enforce_approve_posts) {
     await reddit.approve(postId);
     await sendApprovalNotice(postId, record.authorName, subredditName, true);
     await recordAction('Approved flaired post', { postId });

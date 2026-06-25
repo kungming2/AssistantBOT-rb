@@ -46,47 +46,63 @@
       "flair_enforcement_enabled": {
         "type": "boolean",
         "label": "Enable Flair Enforcement",
-        "helpText": "When disabled, Artemis will not remind users about missing post flair or remove unflaired posts."
+        "helpText": "Enabling this option will allow Artemis to remind users about missing post flair and remove unflaired posts."
+      },
+      "flair_enforce_remove_posts": {
+        "type": "boolean",
+        "label": "Remove Unflaired Posts",
+        "helpText": "Only applies when flair enforcement is enabled. Remove posts that remain unflaired; when disabled, Artemis sends flair reminder messages without removing posts."
       },
       "flair_enforce_moderators": {
         "type": "boolean",
         "label": "Enforce Flair on Moderator Posts",
-        "helpText": "Apply flair enforcement to posts made by subreddit moderators."
+        "helpText": "Apply flair enforcement settings to posts made by subreddit moderators. By default, Artemis will not enforce flair for moderators."
       },
       "flair_enforce_approve_posts": {
         "type": "boolean",
         "label": "Approve Flaired Posts",
-        "helpText": "Approve posts that Artemis removed once they receive an allowed flair."
+        "helpText": "Approve posts that Artemis has previously removed once they receive a post flair. Only applies when unflaired post removal is enabled."
       },
       "flair_enforce_custom_message": {
         "type": "paragraph",
         "label": "Custom Flair Reminder Message",
-        "helpText": "Optional moderator-provided text included in flair reminder messages. Messages over 500 characters are truncated."
+        "helpText": "Provide a custom message to include in the bot's flair reminder messages. Messages over 500 characters will be truncated. (optional)"
+      },
+      "custom_goodbye": {
+        "type": "paragraph",
+        "label": "Custom Goodbye",
+        "helpText": "A short sign-off message used in flair reminder messages. Values over 20 characters are truncated. (optional)"
       },
       "flair_enforce_whitelist": {
         "type": "paragraph",
-        "label": "Flair Enforcement Whitelist",
-        "helpText": "Optional usernames to skip, separated by commas or new lines. Do not include u/."
+        "label": "Flair Enforcement Username Whitelist",
+        "helpText": "Exclude these usernames from being subject to flair enforcement. Separate usernames with commas or new lines. Do not include u/. (optional)"
       },
       "flair_tag_nsfw": {
         "type": "paragraph",
         "label": "NSFW Flair Template IDs",
-        "helpText": "Optional post flair template IDs that should mark matching posts as NSFW. Separate IDs with commas or new lines."
+        "helpText": "Post flair template IDs listed here will be automatically tagged as 'NSFW'. Separate IDs with commas or new lines."
       },
       "flair_tag_spoiler": {
         "type": "paragraph",
         "label": "Spoiler Flair Template IDs",
-        "helpText": "Optional post flair template IDs that should mark matching posts as spoilers. Separate IDs with commas or new lines."
+        "helpText": "Post flair template IDs listed here will be automatically tagged as 'spoiler'. Separate IDs with commas or new lines. (optional)"
+      },
+      "flair_schedule_notes": {
+        "type": "paragraph",
+        "label": "Flair Schedule Notes",
+        "helpText": "Completely optional, but Artemis allows you to set flairs (up to five) to only be allowed on certain days.",
+        "placeholder": "For example, a 'Memes' flair can be set to only be allowed on Mondays, or a 'Self-Promotion' flair on Sundays."
       },
       "flair_schedule_rule_1_ids": {
         "type": "paragraph",
-        "label": "Scheduled Flair Rule 1 IDs",
-        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+        "label": "Flair Schedule 1: Template IDs",
+        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
       },
       "flair_schedule_rule_1_days": {
         "type": "multiSelect",
-        "label": "Scheduled Flair Rule 1 Days",
-        "helpText": "Weekdays when Rule 1 flair IDs are allowed.",
+        "label": "Flair Schedule 1: Allowed Days",
+        "helpText": "Days when these flair templates are allowed.",
         "options": [
           { "label": "Sunday", "value": "Sun" },
           { "label": "Monday", "value": "Mon" },
@@ -99,13 +115,13 @@
       },
       "flair_schedule_rule_2_ids": {
         "type": "paragraph",
-        "label": "Scheduled Flair Rule 2 IDs",
-        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+        "label": "Flair Schedule 2: Template IDs",
+        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
       },
       "flair_schedule_rule_2_days": {
         "type": "multiSelect",
-        "label": "Scheduled Flair Rule 2 Days",
-        "helpText": "Weekdays when Rule 2 flair IDs are allowed.",
+        "label": "Flair Schedule 2: Allowed Days",
+        "helpText": "Days when these flair templates are allowed.",
         "options": [
           { "label": "Sunday", "value": "Sun" },
           { "label": "Monday", "value": "Mon" },
@@ -118,13 +134,13 @@
       },
       "flair_schedule_rule_3_ids": {
         "type": "paragraph",
-        "label": "Scheduled Flair Rule 3 IDs",
-        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+        "label": "Flair Schedule 3: Template IDs",
+        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
       },
       "flair_schedule_rule_3_days": {
         "type": "multiSelect",
-        "label": "Scheduled Flair Rule 3 Days",
-        "helpText": "Weekdays when Rule 3 flair IDs are allowed.",
+        "label": "Flair Schedule 3: Allowed Days",
+        "helpText": "Days when these flair templates are allowed.",
         "options": [
           { "label": "Sunday", "value": "Sun" },
           { "label": "Monday", "value": "Mon" },
@@ -137,13 +153,13 @@
       },
       "flair_schedule_rule_4_ids": {
         "type": "paragraph",
-        "label": "Scheduled Flair Rule 4 IDs",
-        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+        "label": "Flair Schedule 4: Template IDs",
+        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
       },
       "flair_schedule_rule_4_days": {
         "type": "multiSelect",
-        "label": "Scheduled Flair Rule 4 Days",
-        "helpText": "Weekdays when Rule 4 flair IDs are allowed.",
+        "label": "Flair Schedule 4: Allowed Days",
+        "helpText": "Days when these flair templates are allowed.",
         "options": [
           { "label": "Sunday", "value": "Sun" },
           { "label": "Monday", "value": "Mon" },
@@ -156,13 +172,13 @@
       },
       "flair_schedule_rule_5_ids": {
         "type": "paragraph",
-        "label": "Scheduled Flair Rule 5 IDs",
-        "helpText": "Optional post flair template IDs for this schedule rule. Separate IDs with commas or new lines."
+        "label": "Flair Schedule 5: Template IDs",
+        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
       },
       "flair_schedule_rule_5_days": {
         "type": "multiSelect",
-        "label": "Scheduled Flair Rule 5 Days",
-        "helpText": "Weekdays when Rule 5 flair IDs are allowed.",
+        "label": "Flair Schedule 5: Allowed Days",
+        "helpText": "Days when these flair templates are allowed.",
         "options": [
           { "label": "Sunday", "value": "Sun" },
           { "label": "Monday", "value": "Mon" },
@@ -172,11 +188,6 @@
           { "label": "Friday", "value": "Fri" },
           { "label": "Saturday", "value": "Sat" }
         ]
-      },
-      "custom_goodbye": {
-        "type": "string",
-        "label": "Custom Goodbye",
-        "helpText": "Optional short sign-off used in flair reminder messages. Values over 20 characters are truncated."
       }
     }
   },

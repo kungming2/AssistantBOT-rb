@@ -3,7 +3,6 @@ export const ARTEMIS_CONFIG_PAGE = 'assistantbot_config';
 export const ARTEMIS_SETTINGS = {
   minMonitorSeconds: 300,
   maxMonitorSeconds: 86_400,
-  minSubscribersForUserflair: 50_000,
   advancedLimitMessage: 500,
   advancedLimitName: 20,
   processedPostRetention: 5_000,

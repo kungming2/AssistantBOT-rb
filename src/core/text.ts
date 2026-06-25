@@ -71,9 +71,12 @@ Moderator controls for this Devvit port live in the app installation settings pa
 
 https://developers.reddit.com/r/${s}/apps/assistantbot-rb
 
-Existing advanced YAML pages are still read as a legacy fallback:
+Existing advanced YAML pages are read only as a legacy fallback when a matching
+installation setting has not been saved:
 
 https://www.reddit.com/r/${s}/wiki/assistantbot_config
+
+The old modmail update/revert workflow is deprecated in this Devvit port.
 
 ---
 
@@ -134,21 +137,17 @@ export function msgModInitNonMinimum(subredditName: string): string {
 }
 
 /**
- * Sent when Artemis has the `posts` moderator permission and will
- * remove unflaired posts.
+ * Sent when Artemis will remove unflaired posts.
  *
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgModInitStrict(subredditName: string): string {
   const s = subredditName;
   return `
-🔨 Since I have the \`posts\` moderator permission, I will *remove* posts \
-without any flair and automatically \
+🔨 I will *remove* posts without any flair and automatically \
 *restore and approve* them once a flair is selected. Unflaired posts older than 24 hours are \
 considered abandoned by their submitter and will not be restored.
 
-To disable post removals but continue flair enforcement via reminder messages, simply uncheck \
-my \`posts\` moderator permission [here](https://www.reddit.com/r/${s}/about/moderators). \
 Please keep in mind that I do not act on moderators' posts by default, so please use a \
 throwaway account if you are testing my functions out.
 
@@ -158,8 +157,7 @@ throwaway account if you are testing my functions out.
 }
 
 /**
- * Sent when Artemis has the `flair` moderator permission and can
- * assign flairs via message reply.
+ * Sent when describing the legacy private-message flair workflow.
  */
 export const MSG_MOD_INIT_MESSAGING = `
 📨 The old AssistantBOT workflow where submitters replied to a private message with a flair name \
@@ -187,16 +185,14 @@ available.
 `;
 
 /**
- * Sent when Artemis lacks the `wiki` moderator permission needed to
- * maintain the statistics wiki page.
+ * Sent when Artemis cannot maintain the statistics wiki page.
  *
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgModInitNeedWiki(subredditName: string): string {
   return `
-😕 It appears that I do not have the \`wiki\` mod permission to create and update a subreddit's \
-statistics page. If you would still like me to assist the mod team with statistics, please grant \
-me the \`wiki\` [mod permission here](https://www.reddit.com/r/${subredditName}/about/moderators). Thanks!
+😕 Artemis could not create or update r/${subredditName}'s statistics wiki page. Please check the \
+Devvit app installation status and try again. Thanks!
 `;
 }
 
@@ -237,17 +233,13 @@ export function msgModRespUserflair(status: "ENABLED" | "DISABLED", subredditNam
 }
 
 /**
- * Sent when Artemis lacks the `flair` permission needed to gather
- * userflair statistics.
+ * Sent when userflair statistics are unavailable.
  *
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgModRespUserflairNeedFlair(subredditName: string): string {
   return `
-😕 It appears that I do not have the \`flair\` mod permission to gather userflair statistics. \
-If you would still like me to assist with userflair statistics, please grant me the \`flair\` \
-[mod permission here](https://www.reddit.com/r/${subredditName}/about/moderators) and resend this message. \
-Thanks!
+😕 Userflair statistics are not available for r/${subredditName} in this Devvit port. Thanks!
 `;
 }
 
@@ -414,7 +406,7 @@ Thank you very much, and ${goodbye}!
 `;
 }
 
-/** Additional instructions shown if Artemis has the `flair` permission. */
+/** Legacy private-message flair instructions, retained for migration text parity. */
 export const MSG_USER_FLAIR_BODY_MESSAGING =
   "\n* ↩️ *or* replying to this message with just the text of a " +
   "flair listed below. Capitalization does not matter.";
@@ -691,12 +683,15 @@ export const ADV_DEFAULT = `
     # INSTRUCTIONS: https://www.reddit.com/r/AssistantBOT/wiki/advanced
     # -----------------------------------------------------------------
     # This is the legacy advanced YAML configuration page for Artemis.
-    # Current controls now live in the Devvit app's installation settings page:
+    # Current controls live in the Devvit app's installation settings page:
     # https://developers.reddit.com/r/YOUR_SUBREDDIT/apps/assistantbot-rb
     #
     # The installation settings page overrides matching values below when a
-    # moderator saves an app setting. This wiki page is only a compatibility
-    # fallback for older AssistantBOT configuration.
+    # moderator saves an app setting. This wiki page is only a legacy fallback
+    # for older AssistantBOT configuration.
+    #
+    # The old modmail Update/Revert workflow is deprecated. Use the Devvit
+    # installation settings page for current Artemis controls.
     #
     # Everything below must be written in valid YAML, which is the same syntax
     # that AutoModerator uses.
@@ -707,8 +702,14 @@ export const ADV_DEFAULT = `
     # Prefer the Devvit installation setting for this value.
     # Default setting: False
     flair_enforce_moderators: False
+    # A boolean determining whether Artemis removes posts that are missing post flair.
+    # Prefer the Devvit installation setting for this value.
+    # If False, Artemis sends flair reminder messages without removing those posts.
+    # Default setting: True
+    flair_enforce_remove_posts: True
     # A boolean determining whether Artemis approves removed posts once flaired by a user or a mod.
     # Prefer the Devvit installation setting for this value.
+    # This only applies when flair_enforce_remove_posts is True.
     # Please do NOT change this unless you plan on reviewing/approving all removed posts manually!
     # Default setting: True
     flair_enforce_approve_posts: True
@@ -745,21 +746,19 @@ export const ADV_DEFAULT = `
 `;
 
 /**
- * Sent when a subreddit's advanced configuration page is successfully
- * loaded/updated.
+ * Sent when a subreddit's legacy advanced configuration page is loaded.
  *
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function configGood(subredditName: string): string {
   const s = subredditName;
   return `
-👍 The data for r/${s} has been updated from the **[advanced configuration page]\
-(https://www.reddit.com/r/${s}/wiki/assistantbot_config)** successfully! \
-It will be used for your community's [advanced Artemis settings]\
-(https://www.reddit.com/r/AssistantBOT/wiki/advanced).
+👍 Artemis can read r/${s}'s **[legacy advanced configuration page]\
+(https://www.reddit.com/r/${s}/wiki/assistantbot_config)** as a fallback for older settings.
 
-* The Devvit app installation settings page is preferred for current Artemis controls.
-* Existing advanced configuration pages are retained as a legacy fallback for older settings.
+* Use the Devvit app installation settings page for current Artemis controls.
+* Saved Devvit installation settings override matching values from this wiki page.
+* The old modmail update/revert workflow is deprecated in this Devvit port.
 * Advanced wiki changes are read automatically the next time Artemis processes a relevant trigger \
 or scheduled job.
 `;
@@ -775,17 +774,15 @@ or scheduled job.
 export function configBad(subredditName: string, errorMessage: string): string {
   const s = subredditName;
   return `
-👎 Artemis encountered an error with the advanced configuration data for r/${s}. Please check the \
-**[advanced configuration page](https://www.reddit.com/r/${s}/wiki/assistantbot_config)**'s data \
-with this [online tool](https://onlineyamltools.com/validate-yaml) and make sure that all the \
-necessary variables are [present and of the expected type]\
-(https://www.reddit.com/r/AssistantBOT/wiki/advanced#wiki_troubleshooting).
+👎 Artemis encountered an error with the legacy advanced configuration data for r/${s}. Please check \
+the **[assistantbot_config wiki page](https://www.reddit.com/r/${s}/wiki/assistantbot_config)**'s \
+YAML with this [online tool](https://onlineyamltools.com/validate-yaml).
 
-Alternatively, please make sure that Artemis has the required \`wiki\` [mod permission]\
-(https://www.reddit.com/r/${s}/about/moderators).
+For current Artemis controls, use the Devvit app installation settings page. This wiki page is only \
+read as a legacy fallback, and the old modmail update/revert workflow is deprecated.
 
-Once everything has been fixed, Artemis will read the corrected configuration the next time it \
-processes a relevant trigger or scheduled job.
+Once everything has been fixed, Artemis will read the corrected fallback configuration the next time \
+it processes a relevant trigger or scheduled job.
 
 ---
 
@@ -798,17 +795,16 @@ ${errorMessage}
 }
 
 /**
- * Sent when a subreddit's advanced configuration has been reverted to
- * defaults.
+ * Historical message for the deprecated legacy advanced configuration revert
+ * workflow.
  *
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function configRevert(subredditName: string): string {
-  const s = subredditName;
   return `
-🧹 Your subreddit's settings have now been reverted to their regular configuration. \
-The content of the **[advanced configuration page]\
-(https://www.reddit.com/r/${s}/wiki/assistantbot_config)** has also been reverted to its default \
-settings.
+🧹 The old modmail revert workflow is deprecated in this Devvit port. Use the Devvit app installation \
+settings page for current Artemis controls. The **[assistantbot_config wiki page]\
+(https://www.reddit.com/r/${subredditName}/wiki/assistantbot_config)** is read only as a legacy fallback \
+when matching installation settings have not been saved.
 `;
 }

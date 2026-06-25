@@ -98,6 +98,7 @@ function parseConfig(content: string): ArtemisSubredditConfig {
 
   const data = loaded as Record<string, unknown>;
   return {
+    flair_enforce_remove_posts: data.flair_enforce_remove_posts !== false,
     flair_enforce_moderators: data.flair_enforce_moderators === true,
     flair_enforce_approve_posts: data.flair_enforce_approve_posts !== false,
     flair_enforce_custom_message: limitString(
@@ -145,6 +146,9 @@ async function applyInstallSettings(
   const installSettings = await loadInstallSettings();
   const merged = { ...config };
 
+  if (hasInstallSetting(installSettings, 'flair_enforce_remove_posts')) {
+    merged.flair_enforce_remove_posts = installSettings.flair_enforce_remove_posts === true;
+  }
   if (hasInstallSetting(installSettings, 'flair_enforce_moderators')) {
     merged.flair_enforce_moderators = installSettings.flair_enforce_moderators === true;
   }

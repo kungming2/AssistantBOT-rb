@@ -5,6 +5,7 @@ export type FlairTagsConfig = Partial<Record<'nsfw' | 'spoiler', string[]>>;
 export type FlairScheduleConfig = Record<string, string[]>;
 
 export type ArtemisSubredditConfig = {
+  flair_enforce_remove_posts: boolean;
   flair_enforce_moderators: boolean;
   flair_enforce_approve_posts: boolean;
   flair_enforce_custom_message: string;
