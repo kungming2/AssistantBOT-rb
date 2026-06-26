@@ -15,8 +15,8 @@ Artemis currently focuses on two core functions:
 
 Implemented moderation features include:
 
-- Delayed checks for newly submitted posts so users have time to select a flair.
-- Reminder messages for submitters whose posts remain unflaired.
+- Immediate checks for newly submitted posts when Reddit sends the post-submit trigger.
+- Reminder messages for submitters whose posts are submitted without flair.
 - Strict-mode removal of unflaired posts.
 - Automatic approval of previously removed posts after an allowed flair is selected, when configured.
 - Reconciliation of tracked posts in case Reddit misses a flair-update trigger.
@@ -39,8 +39,8 @@ Implemented:
 
 - Reads Artemis configuration from the Devvit installation settings page.
 - Falls back to existing legacy configuration from `r/<subreddit>/wiki/assistantbot_config` when matching installation settings have not been saved.
-- Handles `onPostSubmit` by scheduling a delayed flair check.
-- Removes or reminds users about posts that remain unflaired after the 5-minute grace period.
+- Handles `onPostSubmit` by checking flair immediately.
+- Removes or reminds users about posts submitted without flair.
 - Tracks removed/reminded posts in Redis so flair updates can be reconciled later.
 - Handles `onPostFlairUpdate` for previously tracked posts.
 - Approves previously removed posts after they receive an allowed flair, when configured.
@@ -76,7 +76,7 @@ After installation, Artemis will:
 
 - Initialize per-subreddit Redis state.
 - Create `r/<subreddit>/wiki/assistantbot_statistics` when possible.
-- Begin enforcing flair on new posts through Reddit triggers and scheduled checks.
+- Begin enforcing flair on new posts through Reddit triggers.
 - Refresh statistics through scheduled jobs after midnight UTC.
 
 For best results, subreddits should also enable Reddit's built-in "Require post flair" post requirement. Artemis is still useful as a backup because it can catch posts that pass through Reddit's native requirement checks or are affected by client/platform inconsistencies.

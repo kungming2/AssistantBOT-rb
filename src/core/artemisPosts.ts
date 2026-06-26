@@ -1,4 +1,4 @@
-import { reddit, scheduler, type Post } from '@devvit/web/server';
+import { reddit, type Post } from '@devvit/web/server';
 import type { PostV2, UserV2 } from '@devvit/web/shared';
 import type { T3 } from '@devvit/shared-types/tid.js';
 import {
@@ -9,11 +9,12 @@ import {
   msgUserFlairBody,
   msgUserFlairModmailLink,
   msgUserFlairSubject,
+  MSG_USER_FLAIR_NO_PUBLIC_FLAIRS,
   MSG_USER_FLAIR_REMOVAL,
   MSG_USER_FLAIR_REMOVAL_NO_APPROVE,
   randomGoodbye,
 } from './text';
-import { ARTEMIS_JOBS, ARTEMIS_SETTINGS } from './artemisSettings';
+import { ARTEMIS_SETTINGS } from './artemisSettings';
 import { toT3 } from './artemisIds';
 import { loadSubredditConfig } from './artemisConfig';
 import { applyConfiguredFlairTags, collatePublicPostFlairs, isFlairAllowedToday, postHasFlair } from './artemisFlair';
@@ -48,6 +49,10 @@ function permalinkUrl(permalink: string): string {
 
 function getAuthorName(author: UserV2 | undefined): string {
   return author?.name || '[deleted]';
+}
+
+function privateMessageRecipient(username: string): string {
+  return username.replace(/^\/?u\//i, '');
 }
 
 function shouldSkipBotAuthor(authorName: string, appUsername: string | undefined): boolean {
@@ -114,14 +119,6 @@ function postModelToPostV2(post: Post): PostV2 {
   };
 }
 
-async function schedulePostCheck(postId: T3, subredditName: string, createdAt: number): Promise<void> {
-  await scheduler.runJob({
-    name: ARTEMIS_JOBS.checkSubmittedPost,
-    data: { postId, subredditName },
-    runAt: new Date((createdAt + ARTEMIS_SETTINGS.minMonitorSeconds) * 1000),
-  });
-}
-
 async function notifyAuthorAboutFlair(
   post: TriggerPost,
   authorName: string,
@@ -130,13 +127,19 @@ async function notifyAuthorAboutFlair(
   customMessage: string,
   goodbye: string
 ): Promise<void> {
-  const availableFlairs = await collatePublicPostFlairs(subredditName);
-  if (!availableFlairs || authorName === '[deleted]') {
+  if (authorName === '[deleted]') {
     return;
   }
 
+  let availableFlairs = MSG_USER_FLAIR_NO_PUBLIC_FLAIRS;
+  try {
+    availableFlairs = (await collatePublicPostFlairs(subredditName)) || availableFlairs;
+  } catch (err) {
+    console.error(`Artemis PM: could not list public post flairs for r/${subredditName}.`, err);
+  }
+
   await reddit.sendPrivateMessage({
-    to: authorName,
+    to: privateMessageRecipient(authorName),
     subject: msgUserFlairSubject(subredditName),
     text: msgUserFlairBody({
       username: authorName,
@@ -165,7 +168,7 @@ async function sendApprovalNotice(
 
   const post = await reddit.getPostById(postId);
   await reddit.sendPrivateMessage({
-    to: authorName,
+    to: privateMessageRecipient(authorName),
     subject: `[Notification] Your post on r/${subredditName} has been flaired.`,
     text: msgUserFlairApproval({
       username: authorName,
@@ -190,7 +193,7 @@ async function sendScheduleRemovalNotice(
   }
 
   await reddit.sendPrivateMessage({
-    to: authorName,
+    to: privateMessageRecipient(authorName),
     subject: msgScheduleRemovalSubject(subredditName),
     text: msgScheduleRemoval({
       username: authorName,
@@ -236,12 +239,6 @@ export async function handlePostSubmitted(params: {
   }
 
   const ageSeconds = nowSeconds() - post.createdAt;
-  if (ageSeconds < ARTEMIS_SETTINGS.minMonitorSeconds) {
-    if (!params.ignoreProcessed) {
-      await schedulePostCheck(postId, subredditName, post.createdAt || nowSeconds());
-    }
-    return;
-  }
   if (ageSeconds > ARTEMIS_SETTINGS.maxMonitorSeconds / 4) {
     return;
   }
@@ -309,8 +306,6 @@ export async function handlePostSubmitted(params: {
     await reddit.remove(postId, false);
     await markStatsPostRemoved(postId);
     await recordAction('Removed post', { postId });
-  } else {
-    await recordAction('Sent flair reminder', { postId });
   }
 
   const customMessage = config.flair_enforce_custom_message
@@ -325,17 +320,8 @@ export async function handlePostSubmitted(params: {
     customMessage,
     config.custom_goodbye || randomGoodbye()
   );
+  await recordAction('Sent flair reminder', { postId });
 
-}
-
-export async function checkSubmittedPost(postId: string, subredditName: string): Promise<void> {
-  const post = await reddit.getPostById(toT3(postId));
-  await handlePostSubmitted({
-    post: postModelToPostV2(post),
-    author: { id: post.authorId ?? '', name: post.authorName } as UserV2,
-    subredditName,
-    ignoreProcessed: true,
-  });
 }
 
 export async function handlePostFlairUpdated(params: {

@@ -35,7 +35,6 @@ Configured triggers:
 
 Configured scheduler tasks:
 
-- `artemis-check-submitted-post`: one-off delayed check for a submitted post.
 - `artemis-reconcile-filtered-posts`: cron reconciliation every 15 minutes.
 - `artemis-record-daily-stats`: daily post/subscriber statistics refresh after midnight UTC.
 - `artemis-record-monthly-stats`: monthly top-post statistics refresh after midnight UTC on the first day of the month.

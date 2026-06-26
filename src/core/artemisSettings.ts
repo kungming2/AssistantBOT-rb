@@ -1,7 +1,6 @@
 export const ARTEMIS_CONFIG_PAGE = 'assistantbot_config';
 
 export const ARTEMIS_SETTINGS = {
-  minMonitorSeconds: 300,
   maxMonitorSeconds: 86_400,
   advancedLimitMessage: 500,
   advancedLimitName: 20,
@@ -15,7 +14,6 @@ export const ARTEMIS_SETTINGS = {
 } as const;
 
 export const ARTEMIS_JOBS = {
-  checkSubmittedPost: 'artemis-check-submitted-post',
   reconcileFilteredPosts: 'artemis-reconcile-filtered-posts',
   recordDailyStats: 'artemis-record-daily-stats',
   recordMonthlyStats: 'artemis-record-monthly-stats',

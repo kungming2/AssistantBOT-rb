@@ -29,6 +29,32 @@ export function botDisclaimer(subredditName: string): string {
   );
 }
 
+/** One-time Modmail notification sent when the Devvit app is installed. */
+export function msgModInstallOnboarding(subredditName: string): string {
+  const s = subredditName;
+  return `
+Artemis is now active on r/${s}.
+
+What Artemis will do:
+
+* Enforce post flair for new submissions as soon as Reddit sends the post-submit trigger.
+* Send flair reminder messages to submitters whose posts are submitted without flair.
+* Remove unflaired posts and approve them after flair is selected, when enabled in settings.
+* Apply configured NSFW and spoiler tags for matching post flair template IDs.
+* Update the moderator-only statistics wiki page at [assistantbot_statistics](https://www.reddit.com/r/${s}/wiki/assistantbot_statistics).
+
+Configuration lives in the Devvit app installation settings page:
+
+https://developers.reddit.com/r/${s}/apps/assistantbot-rb
+
+For best results, also enable Reddit's built-in "Require post flair" post requirement for this subreddit.
+
+For support and project updates, visit r/AssistantBOT:
+
+https://www.reddit.com/r/AssistantBOT/
+`;
+}
+
 /**
  * Sent when Artemis accepts a moderator invite to a subreddit.
  *
@@ -142,7 +168,6 @@ export function msgModInitNonMinimum(subredditName: string): string {
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgModInitStrict(subredditName: string): string {
-  const s = subredditName;
   return `
 🔨 I will *remove* posts without any flair and automatically \
 *restore and approve* them once a flair is selected. Unflaired posts older than 24 hours are \
@@ -152,7 +177,7 @@ Please keep in mind that I do not act on moderators' posts by default, so please
 throwaway account if you are testing my functions out.
 
 **I also recommend turning on the \`Require post flair\` setting in this subreddit's \
-[post requirements](https://new.reddit.com/r/${s}/about/settings) for best results.**
+[post requirements](https://new.reddit.com/r/${subredditName}/about/settings) for best results.**
 `;
 }
 
@@ -410,6 +435,11 @@ Thank you very much, and ${goodbye}!
 export const MSG_USER_FLAIR_BODY_MESSAGING =
   "\n* ↩️ *or* replying to this message with just the text of a " +
   "flair listed below. Capitalization does not matter.";
+
+/** Fallback flair list shown when public flair templates cannot be listed. */
+export const MSG_USER_FLAIR_NO_PUBLIC_FLAIRS =
+  "No public post flairs are currently available for this subreddit. " +
+  "Please contact the moderators using the link below so they can help restore your post.";
 
 /**
  * Builds the modmail compose link used in the flair-reminder message.

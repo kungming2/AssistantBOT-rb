@@ -13,9 +13,6 @@
   },
   "scheduler": {
     "tasks": {
-      "artemis-check-submitted-post": {
-        "endpoint": "/internal/scheduler/artemis-check-submitted-post"
-      },
       "artemis-reconcile-filtered-posts": {
         "endpoint": "/internal/scheduler/artemis-reconcile-filtered-posts",
         "cron": "*/15 * * * *"
