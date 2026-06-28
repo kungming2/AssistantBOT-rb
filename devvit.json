@@ -47,6 +47,14 @@
         "location": ["subreddit"],
         "endpoint": "/internal/menu/refresh-statistics-page",
         "postFilter": "none"
+      },
+      {
+        "label": "[Artemis] Refresh User Flair Statistics",
+        "description": "Gather current user flair assignments and update the statistics wiki page",
+        "forUserType": "moderator",
+        "location": ["subreddit"],
+        "endpoint": "/internal/menu/refresh-userflair-statistics",
+        "postFilter": "none"
       }
     ]
   },

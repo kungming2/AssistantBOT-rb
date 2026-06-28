@@ -7,12 +7,12 @@ import {
   listStatsPostSnapshots,
   listStatsRuns,
   listSubscriberSnapshots,
-  listUserFlairSnapshots,
+  listUserFlairAggregates,
   type LegacyMonthlyPostStats,
   type MonthlyTopPost,
   type StatsPostSnapshot,
   type SubscriberSnapshot,
-  type UserFlairSnapshot,
+  type UserFlairAggregate,
 } from './artemisStatsStorage';
 import { monthConvertToString, timeConvertToString } from './timekeeping';
 
@@ -530,50 +530,36 @@ function formatSubscriberTrendTable(
   ].join('\n');
 }
 
-function userFlairLabel(snapshot: UserFlairSnapshot): string {
-  if (snapshot.flairText) {
-    return snapshot.flairText;
-  }
-  if (snapshot.flairCssClass) {
-    return `(CSS class: ${snapshot.flairCssClass})`;
-  }
-  return '(blank flair text)';
-}
-
-function formatUserFlairDistributionTable(snapshots: UserFlairSnapshot[]): string {
-  if (!snapshots.length) {
+function formatUserFlairDistributionTable(aggregates: UserFlairAggregate[]): string {
+  if (!aggregates.length) {
     return 'No user flair assignments have been recorded yet.';
   }
 
-  const flairCounts = new Map<string, number>();
-  for (const snapshot of snapshots) {
-    increment(flairCounts, userFlairLabel(snapshot));
-  }
+  const total = aggregates.reduce((sum, aggregate) => sum + aggregate.count, 0);
 
-  const rows = [...flairCounts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  const rows = aggregates
+    .sort((a, b) => b.count - a.count || a.flairLabel.localeCompare(b.flairLabel))
     .slice(0, ARTEMIS_SETTINGS.statsUserFlairDisplayLimit)
     .map(
-      ([flair, count]) =>
-        `| ${markdownEscape(flair)} | ${formatNumber(count)} | ${formatPercentage(
-          count,
-          snapshots.length
-        )} |`
+      (aggregate) =>
+        `| ${markdownEscape(aggregate.flairLabel)} | ${formatNumber(
+          aggregate.count
+        )} | ${formatPercentage(aggregate.count, total)} |`
     );
 
   return [
     '| User Flair | Users | Percentage |',
     '|------------|------:|-----------:|',
     ...rows,
-    `| **Total listed user flairs** | ${formatNumber(snapshots.length)} | 100% |`,
+    `| **Total listed user flairs** | ${formatNumber(total)} | 100% |`,
   ].join('\n');
 }
 
 export async function collateOverallSection(): Promise<string> {
-  const [snapshots, subscriberSnapshots, userFlairSnapshots] = await Promise.all([
+  const [snapshots, subscriberSnapshots, userFlairAggregates] = await Promise.all([
     listStatsPostSnapshots({ limit: ARTEMIS_SETTINGS.statsPostListingLimit }),
     listSubscriberSnapshots(),
-    listUserFlairSnapshots(),
+    listUserFlairAggregates(),
   ]);
 
   return [
@@ -587,7 +573,7 @@ export async function collateOverallSection(): Promise<string> {
     '',
     '### User Flair Distribution',
     '',
-    formatUserFlairDistributionTable(userFlairSnapshots),
+    formatUserFlairDistributionTable(userFlairAggregates),
   ].join('\n');
 }
 

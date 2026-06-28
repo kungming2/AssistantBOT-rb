@@ -39,10 +39,11 @@
 
 * 🆕 **Feature**: Artemis has been rebuilt as a Devvit app that moderators install directly on each subreddit, rather than as a single externally hosted Python bot account.
 * 🆕 **Feature**: Flair enforcement is now handled by Reddit triggers. New submissions are checked as soon as the post-submit trigger is received, and flair changes can approve previously removed unflaired posts when configured.
-* 🆕 **Feature**: The statistics routine has been ported to Devvit, with subreddit-local post, subscriber, userflair, and action-counter snapshots updating `assistantbot_statistics`.
+* 🆕 **Feature**: The statistics routine has been ported to Devvit, with subreddit-local post snapshots, subscriber snapshots, aggregate userflair counts, and action counters updating `assistantbot_statistics`.
 * ➕ **Addition**: Added Devvit installation settings for current Artemis controls, including flair enforcement, statistics updating, userflair gathering, NSFW/spoiler tagging, weekday flair schedules, and optional Discord alerts.
-* ➕ **Addition**: Added moderator-only menu items to check up to 100 recent posts for missing flair and to manually refresh the statistics wiki page.
+* ➕ **Addition**: Added moderator-only menu items to check up to 100 recent posts for missing flair, manually refresh the statistics wiki page, and manually refresh user flair statistics.
 * ➕ **Addition**: Added optional Discord webhook alerts for completed statistics updates, recent-post flair refreshes, and flair actions.
+* ➕ **Addition**: Added one-time modmail notifications for the first successful statistics page update, missing public post flairs during onboarding, and statistics wiki setup failures.
 * ➕ **Addition**: Existing Python-era `assistantbot_statistics` pages are archived to `assistantbot_statistics_legacy` before the first Devvit statistics write.
 * 🔧 **Change**: Artemis now stores runtime state in per-installation Devvit Redis instead of the old shared SQLite databases.
 * 🔧 **Change**: Existing `assistantbot_config` wiki pages are read as compatibility fallbacks, but saved Devvit installation settings are now the active configuration surface.

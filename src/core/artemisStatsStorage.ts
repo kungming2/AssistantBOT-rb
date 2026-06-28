@@ -36,11 +36,10 @@ export type SubscriberSnapshot = {
   count: number;
 };
 
-export type UserFlairSnapshot = {
+export type UserFlairAggregate = {
   subredditName: string;
-  username: string;
-  flairText: string;
-  flairCssClass: string;
+  flairLabel: string;
+  count: number;
   updatedAt: number;
 };
 
@@ -158,46 +157,52 @@ export async function listSubscriberSnapshots(): Promise<SubscriberSnapshot[]> {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-function userFlairKey(subredditName: string, username: string): string {
-  return `${subredditName.toLowerCase()}:${username.toLowerCase()}`;
-}
-
-export async function saveUserFlairSnapshots(
+export async function saveUserFlairAggregates(
   subredditName: string,
-  snapshots: UserFlairSnapshot[]
+  aggregates: UserFlairAggregate[]
 ): Promise<void> {
   const normalizedSubredditName = subredditName.toLowerCase();
   const existing = await redis.hGetAll(STATS_USER_FLAIRS_KEY);
-  const staleKeys = Object.keys(existing).filter((key) =>
-    key.startsWith(`${normalizedSubredditName}:`)
+  const staleKeys = Object.keys(existing).filter(
+    (key) => key === normalizedSubredditName || key.startsWith(`${normalizedSubredditName}:`)
   );
   if (staleKeys.length) {
     await redis.hDel(STATS_USER_FLAIRS_KEY, staleKeys);
   }
 
-  if (!snapshots.length) {
+  if (!aggregates.length) {
     return;
   }
 
-  await redis.hSet(
-    STATS_USER_FLAIRS_KEY,
-    Object.fromEntries(
-      snapshots.map((snapshot) => [
-        userFlairKey(normalizedSubredditName, snapshot.username),
-        JSON.stringify({
-          ...snapshot,
-          subredditName: normalizedSubredditName,
-        }),
-      ])
-    )
-  );
+  await redis.hSet(STATS_USER_FLAIRS_KEY, {
+    [normalizedSubredditName]: JSON.stringify(
+      aggregates.map((aggregate) => ({
+        ...aggregate,
+        subredditName: normalizedSubredditName,
+      }))
+    ),
+  });
 }
 
-export async function listUserFlairSnapshots(): Promise<UserFlairSnapshot[]> {
+export async function listUserFlairAggregates(): Promise<UserFlairAggregate[]> {
   const stored = await redis.hGetAll(STATS_USER_FLAIRS_KEY);
   return Object.values(stored).flatMap((value) => {
-    const snapshot = parseJson<UserFlairSnapshot>(value);
-    return snapshot ? [snapshot] : [];
+    const aggregates = parseJson<unknown>(value);
+    if (!Array.isArray(aggregates)) {
+      return [];
+    }
+    return aggregates.filter((aggregate): aggregate is UserFlairAggregate => {
+      if (!aggregate || typeof aggregate !== 'object') {
+        return false;
+      }
+      const row = aggregate as Partial<UserFlairAggregate>;
+      return (
+        typeof row.subredditName === 'string' &&
+        typeof row.flairLabel === 'string' &&
+        typeof row.count === 'number' &&
+        typeof row.updatedAt === 'number'
+      );
+    });
   });
 }
 

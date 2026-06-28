@@ -6,23 +6,35 @@ import type {
   OnPostSubmitRequest,
   TriggerResponse,
 } from '@devvit/web/shared';
-import { reddit } from '@devvit/web/server';
-import type { T5 } from '@devvit/shared-types/tid.js';
 import { handlePostFlairUpdated, handlePostSubmitted } from '../core/artemisPosts';
 import { loadSubredditConfig } from '../core/artemisConfig';
-import { initializeSubredditState } from '../core/artemisStorage';
+import {
+  initializeSubredditState,
+  isFlairEnforcementEnabled,
+} from '../core/artemisStorage';
 import { recordStatsPostFromTrigger } from '../core/artemisStatsRecorder';
 import { initializeStatsWikiPage } from '../core/artemisStatsWiki';
-import { msgModInstallOnboarding } from '../core/text';
+import { getPublicPostFlairs } from '../core/artemisFlair';
+import { sendModeratorNotification } from '../core/artemisModmail';
+import {
+  msgModInstallNoPublicFlairsWarning,
+  msgModInstallOnboarding,
+} from '../core/text';
 import type { ArtemisSubredditConfig } from '../core/artemisTypes';
 
 export const triggers = new Hono();
 
-async function initializeSubredditInstall(subredditName: string): Promise<void> {
+async function initializeSubredditInstall(
+  subredditName: string
+): Promise<void> {
   await initializeSubredditState(subredditName);
   const config = await loadSubredditConfig(subredditName);
   if (config.statistics_updating_enabled) {
-    await initializeStatsWikiPage(subredditName);
+    try {
+      await initializeStatsWikiPage(subredditName);
+    } catch (err) {
+      console.warn(`Artemis Install: statistics wiki setup failed for r/${subredditName}.`, err);
+    }
   }
 }
 
@@ -36,18 +48,26 @@ async function sendInstallOnboardingNotification(
   subredditName: string,
   subredditId: string
 ): Promise<void> {
-  try {
-    await reddit.modMail.createModNotification({
-      subredditId: subredditId as T5,
-      subject: 'Artemis is now active',
-      bodyMarkdown: msgModInstallOnboarding(subredditName),
-    });
-  } catch (err) {
-    console.warn(
-      `Artemis Install: could not send onboarding Modmail notification for r/${subredditName}.`,
-      err
-    );
+  let bodyMarkdown = msgModInstallOnboarding(subredditName);
+
+  if (await isFlairEnforcementEnabled(subredditName)) {
+    try {
+      const publicFlairs = await getPublicPostFlairs(subredditName);
+      if (!publicFlairs.length) {
+        bodyMarkdown += msgModInstallNoPublicFlairsWarning(subredditName);
+      }
+    } catch (err) {
+      console.warn(`Artemis Install: could not check public flairs for r/${subredditName}.`, err);
+    }
   }
+
+  await sendModeratorNotification({
+    subredditName,
+    subredditId,
+    subject: 'Artemis is now active',
+    bodyMarkdown,
+    logContext: 'install onboarding',
+  });
 }
 
 triggers.post('/on-app-install', async (c) => {

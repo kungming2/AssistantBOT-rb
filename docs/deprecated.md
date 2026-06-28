@@ -49,7 +49,7 @@ Current replacement behavior:
 
 - `onPostSubmit` and `onPostFlairUpdate` write compact post snapshots.
 - `artemis-record-daily-stats` records recent post snapshots, subscriber snapshots, and the current statistics wiki page.
-- `artemis-record-monthly-stats` records monthly top-post summaries and optional user flair assignment snapshots.
+- `artemis-record-monthly-stats` records monthly top-post summaries and optional aggregate user flair assignment counts.
 - The active page is `r/<subreddit>/wiki/assistantbot_statistics`.
 - Existing Python-era statistics content is archived once to `r/<subreddit>/wiki/assistantbot_statistics_legacy` before the first Devvit statistics write, when a legacy page exists.
 - Future scheduled jobs update only the active Devvit statistics page.

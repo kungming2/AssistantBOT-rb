@@ -12,7 +12,7 @@ Install the app from the Devvit app page for your subreddit:
 https://developers.reddit.com/r/<subreddit>/apps/assistantbot-rb
 ```
 
-After installation, Artemis initializes per-subreddit Redis state, creates the `assistantbot_statistics` wiki page when statistics updating is enabled and possible, sends an onboarding modmail notification, begins processing new post and flair-update triggers, and runs scheduled statistics jobs.
+After installation, Artemis initializes per-subreddit Redis state, creates the `assistantbot_statistics` wiki page when statistics updating is enabled and possible, sends an onboarding modmail notification, begins processing new post and flair-update triggers, and runs scheduled statistics jobs. Artemis also sends moderators a direct link after the statistics page is first successfully updated, warns during onboarding when no public post flairs are available, and sends a setup warning if it cannot create or update the statistics wiki page.
 
 For best results, also enable Reddit's built-in post requirement for required post flair. Artemis is still useful as a backup for posts that reach the subreddit without flair.
 
@@ -71,8 +71,8 @@ Active settings:
 | Setting | What it controls |
 |---|---|
 | **Enable Flair Enforcement** | Turns flair enforcement on or off. |
-| **Enable Statistics Updating** | Runs daily and monthly statistics updates plus the manual statistics page refresh. |
-| **Enable Userflair Gathering** | Gathers user flair assignments during monthly statistics updates and manual statistics page refreshes. |
+| **Enable Statistics Updating** | Runs daily and monthly statistics updates plus the manual statistics page and user flair statistics refreshes. |
+| **Enable Userflair Gathering** | Gathers user flair assignments during monthly statistics updates, manual statistics page refreshes, and manual user flair statistics refreshes. |
 | **Discord Webhook URL** | Discord webhook URL for optional Artemis alerts. Visible to moderators who can manage app settings. |
 | **Send Discord Statistics Alerts** | Sends a Discord alert after daily, monthly, or manual statistics updates finish. |
 | **Send Discord Flair Action Alerts** | Sends a Discord alert after flair reminders, flair-rule removals, flaired-post approvals, or recent-post flair refreshes. |
@@ -158,7 +158,7 @@ Stored data includes:
 - Action counters.
 - Compact post snapshots for statistics.
 - Subscriber snapshots.
-- User flair assignment snapshots, when userflair gathering is enabled.
+- Aggregated user flair assignment counts, when userflair gathering is enabled.
 - Monthly top-post snapshots.
 
 Most stored data comes from Reddit API objects already visible to moderators or publicly visible on Reddit. The Devvit app does not store post images or full post bodies for statistics.
@@ -205,7 +205,7 @@ No. Devvit does not expose an equivalent subreddit traffic endpoint for this app
 
 ### Does Artemis collect userflair statistics?
 
-Yes, when **Enable Userflair Gathering** is on. Artemis records user flair assignment snapshots during the monthly statistics update and manual statistics page refresh, then uses them for the user flair distribution table.
+Yes, when **Enable Userflair Gathering** is on. Artemis records aggregate user flair assignment counts during the monthly statistics update, manual statistics page refresh, and manual user flair statistics refresh, then uses them for the user flair distribution table.
 
 ### Does Artemis use Pushshift or RedditMetrics?
 

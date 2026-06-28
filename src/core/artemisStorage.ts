@@ -17,6 +17,8 @@ type SubredditState = {
   flairEnforcementEnabled: boolean;
   installedAt: number;
   legacyStatsArchived?: boolean;
+  statsWikiReadyNotified?: boolean;
+  statsWikiSetupWarningNotified?: boolean;
 };
 
 type PostOperation = {
@@ -41,6 +43,55 @@ function parseJson<T>(value: string | undefined): T | undefined {
   }
 }
 
+function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+function buildSubredditState(
+  current: SubredditState | undefined,
+  updates: Partial<SubredditState> = {}
+): SubredditState {
+  return {
+    installedAt: updates.installedAt ?? current?.installedAt ?? nowSeconds(),
+    flairEnforcementEnabled:
+      updates.flairEnforcementEnabled ?? current?.flairEnforcementEnabled ?? true,
+    legacyStatsArchived: updates.legacyStatsArchived ?? current?.legacyStatsArchived ?? false,
+    statsWikiReadyNotified:
+      updates.statsWikiReadyNotified ?? current?.statsWikiReadyNotified ?? false,
+    statsWikiSetupWarningNotified:
+      updates.statsWikiSetupWarningNotified ??
+      current?.statsWikiSetupWarningNotified ??
+      false,
+  };
+}
+
+async function loadSubredditState(
+  subredditName: string
+): Promise<SubredditState | undefined> {
+  const normalized = subredditName.toLowerCase();
+  return parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
+}
+
+async function saveSubredditState(
+  subredditName: string,
+  state: SubredditState
+): Promise<void> {
+  const normalized = subredditName.toLowerCase();
+  await redis.hSet(SUBREDDIT_STATE_KEY, {
+    [normalized]: JSON.stringify(state),
+  });
+}
+
+async function updateSubredditState(
+  subredditName: string,
+  updates: Partial<SubredditState>
+): Promise<void> {
+  await saveSubredditState(
+    subredditName,
+    buildSubredditState(await loadSubredditState(subredditName), updates)
+  );
+}
+
 export async function initializeSubredditState(subredditName: string): Promise<void> {
   const normalized = subredditName.toLowerCase();
   const existing = await redis.hGet(SUBREDDIT_STATE_KEY, normalized);
@@ -48,15 +99,7 @@ export async function initializeSubredditState(subredditName: string): Promise<v
     return;
   }
 
-  const state: SubredditState = {
-    flairEnforcementEnabled: true,
-    installedAt: Math.floor(Date.now() / 1000),
-    legacyStatsArchived: false,
-  };
-
-  await redis.hSet(SUBREDDIT_STATE_KEY, {
-    [normalized]: JSON.stringify(state),
-  });
+  await saveSubredditState(subredditName, buildSubredditState(undefined));
 }
 
 export async function getInstalledSubredditNames(): Promise<string[]> {
@@ -69,8 +112,7 @@ export async function isFlairEnforcementEnabled(subredditName: string): Promise<
     return installSettings.flair_enforcement_enabled === true;
   }
 
-  const normalized = subredditName.toLowerCase();
-  const state = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
+  const state = await loadSubredditState(subredditName);
   return state?.flairEnforcementEnabled ?? true;
 }
 
@@ -78,22 +120,11 @@ export async function setFlairEnforcementEnabled(
   subredditName: string,
   enabled: boolean
 ): Promise<void> {
-  const normalized = subredditName.toLowerCase();
-  const current = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
-  const state: SubredditState = {
-    installedAt: current?.installedAt ?? Math.floor(Date.now() / 1000),
-    flairEnforcementEnabled: enabled,
-    legacyStatsArchived: current?.legacyStatsArchived ?? false,
-  };
-
-  await redis.hSet(SUBREDDIT_STATE_KEY, {
-    [normalized]: JSON.stringify(state),
-  });
+  await updateSubredditState(subredditName, { flairEnforcementEnabled: enabled });
 }
 
 export async function hasLegacyStatsArchive(subredditName: string): Promise<boolean> {
-  const normalized = subredditName.toLowerCase();
-  const state = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
+  const state = await loadSubredditState(subredditName);
   return state?.legacyStatsArchived ?? false;
 }
 
@@ -101,17 +132,35 @@ export async function setLegacyStatsArchived(
   subredditName: string,
   archived: boolean
 ): Promise<void> {
-  const normalized = subredditName.toLowerCase();
-  const current = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
-  const state: SubredditState = {
-    installedAt: current?.installedAt ?? Math.floor(Date.now() / 1000),
-    flairEnforcementEnabled: current?.flairEnforcementEnabled ?? true,
-    legacyStatsArchived: archived,
-  };
+  await updateSubredditState(subredditName, { legacyStatsArchived: archived });
+}
 
-  await redis.hSet(SUBREDDIT_STATE_KEY, {
-    [normalized]: JSON.stringify(state),
-  });
+export async function hasStatsWikiReadyNotificationBeenSent(
+  subredditName: string
+): Promise<boolean> {
+  const state = await loadSubredditState(subredditName);
+  return state?.statsWikiReadyNotified ?? false;
+}
+
+export async function setStatsWikiReadyNotificationSent(
+  subredditName: string,
+  sent: boolean
+): Promise<void> {
+  await updateSubredditState(subredditName, { statsWikiReadyNotified: sent });
+}
+
+export async function hasStatsWikiSetupWarningNotificationBeenSent(
+  subredditName: string
+): Promise<boolean> {
+  const state = await loadSubredditState(subredditName);
+  return state?.statsWikiSetupWarningNotified ?? false;
+}
+
+export async function setStatsWikiSetupWarningNotificationSent(
+  subredditName: string,
+  sent: boolean
+): Promise<void> {
+  await updateSubredditState(subredditName, { statsWikiSetupWarningNotified: sent });
 }
 
 export async function hasProcessedPost(postId: T3): Promise<boolean> {

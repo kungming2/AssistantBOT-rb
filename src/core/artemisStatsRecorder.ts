@@ -13,13 +13,30 @@ import {
   saveMonthlyTopPosts,
   saveStatsPostSnapshot,
   saveSubscriberSnapshot,
-  saveUserFlairSnapshots,
+  saveUserFlairAggregates,
   type MonthlyTopPost,
   type StatsPostSnapshot,
-  type UserFlairSnapshot,
+  type UserFlairAggregate,
 } from './artemisStatsStorage';
 
 type TriggerPost = PostV2 & { id: string };
+
+export type UserFlairGatheringSummary = {
+  subredditName: string;
+  pageCount: number;
+  returnedRows: number;
+  assignmentRows: number;
+  aggregateRows: number;
+  skippedRowsWithoutUser: number;
+  usersWithFlairText: number;
+  usersWithCssClass: number;
+  usersWithBlankFlair: number;
+  repeatedCursorDetected: boolean;
+};
+
+type UserFlairGatheringResult = UserFlairGatheringSummary & {
+  aggregates: UserFlairAggregate[];
+};
 
 function nowSeconds(): number {
   return Math.floor(Date.now() / 1000);
@@ -168,43 +185,18 @@ export async function recordSubredditSubscriberSnapshot(
   await saveSubscriberSnapshot(date, subredditInfo.subscribersCount ?? 0);
 }
 
-export async function recordSubredditUserFlairSnapshots(
+export async function recordSubredditUserFlairAggregates(
   subredditName: string
-): Promise<void> {
+): Promise<UserFlairGatheringSummary | undefined> {
   try {
-    const subreddit = await reddit.getSubredditByName(subredditName);
-    const updatedAt = nowSeconds();
-    const snapshots: UserFlairSnapshot[] = [];
-    let after: string | undefined;
-
-    do {
-      const response = await subreddit.getUserFlair(
-        after
-          ? { after, limit: ARTEMIS_SETTINGS.statsUserFlairPageLimit }
-          : { limit: ARTEMIS_SETTINGS.statsUserFlairPageLimit }
+    const result = await collectSubredditUserFlairAggregates(subredditName);
+    await saveUserFlairAggregates(subredditName, result.aggregates);
+    if (result.repeatedCursorDetected) {
+      console.warn(
+        `Artemis Stats Recorder: stopped user flair gathering for r/${subredditName} after a repeated pagination cursor.`
       );
-
-      snapshots.push(
-        ...response.users.flatMap((userFlair) => {
-          if (!userFlair.user) {
-            return [];
-          }
-
-          return [
-            {
-              subredditName: subredditName.toLowerCase(),
-              username: userFlair.user,
-              flairText: userFlair.flairText ?? '',
-              flairCssClass: userFlair.flairCssClass ?? '',
-              updatedAt,
-            },
-          ];
-        })
-      );
-      after = response.next;
-    } while (after);
-
-    await saveUserFlairSnapshots(subredditName, snapshots);
+    }
+    return userFlairGatheringSummaryFromResult(result);
   } catch (err) {
     console.warn(
       `Artemis Stats Recorder: could not record user flair stats for r/${subredditName}.`,
@@ -213,14 +205,118 @@ export async function recordSubredditUserFlairSnapshots(
   }
 }
 
-async function updateUserFlairSnapshotsForConfig(
+async function collectSubredditUserFlairAggregates(
+  subredditName: string
+): Promise<UserFlairGatheringResult> {
+  const subreddit = await reddit.getSubredditByName(subredditName);
+  const updatedAt = nowSeconds();
+  const flairCounts = new Map<string, number>();
+  const seenCursors = new Set<string>();
+  let after: string | undefined;
+  let pageCount = 0;
+  let returnedRows = 0;
+  let assignmentRows = 0;
+  let skippedRowsWithoutUser = 0;
+  let usersWithFlairText = 0;
+  let usersWithCssClass = 0;
+  let usersWithBlankFlair = 0;
+  let repeatedCursorDetected = false;
+
+  do {
+    const response = await subreddit.getUserFlair(
+      after
+        ? { after, limit: ARTEMIS_SETTINGS.statsUserFlairPageLimit }
+        : { limit: ARTEMIS_SETTINGS.statsUserFlairPageLimit }
+    );
+
+    pageCount += 1;
+    returnedRows += response.users.length;
+
+    for (const userFlair of response.users) {
+      if (!userFlair.user) {
+        skippedRowsWithoutUser += 1;
+        continue;
+      }
+
+      const flairLabel = userFlairLabel(userFlair.flairText ?? '', userFlair.flairCssClass ?? '');
+
+      assignmentRows += 1;
+      usersWithFlairText += userFlair.flairText ? 1 : 0;
+      usersWithCssClass += userFlair.flairCssClass ? 1 : 0;
+      usersWithBlankFlair += userFlair.flairText || userFlair.flairCssClass ? 0 : 1;
+      flairCounts.set(flairLabel, (flairCounts.get(flairLabel) ?? 0) + 1);
+    }
+
+    if (response.next && seenCursors.has(response.next)) {
+      repeatedCursorDetected = true;
+      after = undefined;
+    } else {
+      if (response.next) {
+        seenCursors.add(response.next);
+      }
+      after = response.next;
+    }
+  } while (after);
+
+  const aggregates = [...flairCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([flairLabel, count]) => ({
+      subredditName: subredditName.toLowerCase(),
+      flairLabel,
+      count,
+      updatedAt,
+    }));
+
+  return {
+    subredditName: subredditName.toLowerCase(),
+    pageCount,
+    returnedRows,
+    assignmentRows,
+    aggregateRows: aggregates.length,
+    skippedRowsWithoutUser,
+    usersWithFlairText,
+    usersWithCssClass,
+    usersWithBlankFlair,
+    repeatedCursorDetected,
+    aggregates,
+  };
+}
+
+function userFlairLabel(flairText: string, flairCssClass: string): string {
+  if (flairText) {
+    return flairText;
+  }
+  if (flairCssClass) {
+    return `(CSS class: ${flairCssClass})`;
+  }
+  return '(blank flair text)';
+}
+
+function userFlairGatheringSummaryFromResult(
+  result: UserFlairGatheringResult
+): UserFlairGatheringSummary {
+  return {
+    subredditName: result.subredditName,
+    pageCount: result.pageCount,
+    returnedRows: result.returnedRows,
+    assignmentRows: result.assignmentRows,
+    aggregateRows: result.aggregateRows,
+    skippedRowsWithoutUser: result.skippedRowsWithoutUser,
+    usersWithFlairText: result.usersWithFlairText,
+    usersWithCssClass: result.usersWithCssClass,
+    usersWithBlankFlair: result.usersWithBlankFlair,
+    repeatedCursorDetected: result.repeatedCursorDetected,
+  };
+}
+
+async function updateUserFlairAggregatesForConfig(
   subredditName: string,
   enabled: boolean
 ): Promise<void> {
   if (enabled) {
-    await recordSubredditUserFlairSnapshots(subredditName);
+    await recordSubredditUserFlairAggregates(subredditName);
   } else {
-    await saveUserFlairSnapshots(subredditName, []);
+    await saveUserFlairAggregates(subredditName, []);
   }
 }
 
@@ -230,7 +326,7 @@ export async function recordSubredditUserFlairStats(subredditName: string): Prom
     return false;
   }
 
-  await updateUserFlairSnapshotsForConfig(subredditName, config.userflair_gathering_enabled);
+  await updateUserFlairAggregatesForConfig(subredditName, config.userflair_gathering_enabled);
   return true;
 }
 
@@ -246,7 +342,7 @@ export async function recordSubredditDailyStats(
   await recordRecentPostSnapshots(subredditName);
   await recordSubredditSubscriberSnapshot(subredditName, date);
   if (!config.userflair_gathering_enabled) {
-    await saveUserFlairSnapshots(subredditName, []);
+    await saveUserFlairAggregates(subredditName, []);
   }
   await recordStatsRun(ARTEMIS_JOBS.recordDailyStats, nowSeconds());
   return true;
@@ -281,7 +377,7 @@ export async function recordSubredditMonthlyStats(subredditName: string): Promis
 
   await saveMonthlyTopPosts(month, posts.map(topPostSnapshot));
   await recordMonthlyTopCommentedPosts(subredditName, month);
-  await updateUserFlairSnapshotsForConfig(subredditName, config.userflair_gathering_enabled);
+  await updateUserFlairAggregatesForConfig(subredditName, config.userflair_gathering_enabled);
   await recordStatsRun(ARTEMIS_JOBS.recordMonthlyStats, nowSeconds());
   return true;
 }

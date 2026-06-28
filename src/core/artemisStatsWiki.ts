@@ -1,4 +1,5 @@
 import { reddit, type WikiPagePermissionLevel } from '@devvit/web/server';
+import packageJson from '../../package.json';
 import { ARTEMIS_SETTINGS } from './artemisSettings';
 import {
   collateBotStatusSection,
@@ -6,17 +7,30 @@ import {
   collatePostsSection,
   collateSubscribersSection,
 } from './artemisStatsCollator';
-import { hasLegacyStatsArchive, setLegacyStatsArchived } from './artemisStorage';
+import {
+  hasLegacyStatsArchive,
+  hasStatsWikiReadyNotificationBeenSent,
+  hasStatsWikiSetupWarningNotificationBeenSent,
+  setLegacyStatsArchived,
+  setStatsWikiReadyNotificationSent,
+  setStatsWikiSetupWarningNotificationSent,
+} from './artemisStorage';
 import {
   saveLegacyMonthlyPostStats,
   type LegacyMonthlyPostStats,
 } from './artemisStatsStorage';
 import { timeConvertToString } from './timekeeping';
-import { wikipageBlank, wikipageTemplate } from './text';
+import { sendModeratorNotification } from './artemisModmail';
+import {
+  msgModStatisticsFirst,
+  msgModStatsWikiSetupProblem,
+  wikipageBlank,
+  wikipageTemplate,
+} from './text';
 
 export const ARTEMIS_STATS_PAGE = 'assistantbot_statistics';
 export const ARTEMIS_LEGACY_STATS_PAGE = 'assistantbot_statistics_legacy';
-const ARTEMIS_STATS_VERSION = '0.0.0-devvit';
+const ARTEMIS_STATS_VERSION = packageJson.version;
 const ARTEMIS_DEVVIT_STATS_MARKER = '<!-- Artemis Devvit statistics page -->';
 const WIKI_PAGE_MODS_ONLY = 2 as WikiPagePermissionLevel;
 
@@ -63,6 +77,43 @@ function legacyStatsThroughDate(content: string): string | undefined {
 
 function legacyArchiveLink(subredditName: string): string {
   return `https://www.reddit.com/r/${subredditName}/wiki/${ARTEMIS_LEGACY_STATS_PAGE}`;
+}
+
+async function sendStatsWikiReadyNotification(subredditName: string): Promise<void> {
+  if (await hasStatsWikiReadyNotificationBeenSent(subredditName)) {
+    return;
+  }
+
+  const sent = await sendModeratorNotification({
+    subredditName,
+    subject: 'Artemis statistics page is ready',
+    bodyMarkdown: msgModStatisticsFirst(subredditName),
+    logContext: 'statistics page ready',
+  });
+  if (sent) {
+    await setStatsWikiReadyNotificationSent(subredditName, true);
+  }
+}
+
+export async function sendStatsWikiSetupWarningNotification(
+  subredditName: string
+): Promise<void> {
+  if (
+    (await hasStatsWikiReadyNotificationBeenSent(subredditName)) ||
+    (await hasStatsWikiSetupWarningNotificationBeenSent(subredditName))
+  ) {
+    return;
+  }
+
+  const sent = await sendModeratorNotification({
+    subredditName,
+    subject: 'Artemis could not update the statistics wiki',
+    bodyMarkdown: msgModStatsWikiSetupProblem(subredditName),
+    logContext: 'statistics wiki setup warning',
+  });
+  if (sent) {
+    await setStatsWikiSetupWarningNotificationSent(subredditName, true);
+  }
 }
 
 function parseCount(value: string): number {
@@ -267,47 +318,60 @@ function buildAnnouncementSection(
 export async function initializeStatsWikiPage(
   subredditName: string
 ): Promise<void> {
-  const statsPage = await ensureStatsWikiPage(subredditName);
-  await ensureLegacyStatsArchive(subredditName, statsPage);
+  try {
+    const statsPage = await ensureStatsWikiPage(subredditName);
+    await ensureLegacyStatsArchive(subredditName, statsPage);
+  } catch (err) {
+    console.warn(`Artemis Stats Wiki: could not initialize r/${subredditName}.`, err);
+    await sendStatsWikiSetupWarningNotification(subredditName);
+    throw err;
+  }
 }
 
 export async function updateStatsWikiPage(
   subredditName: string
 ): Promise<void> {
-  const compileStart = Date.now();
-  const statsPage = await ensureStatsWikiPage(subredditName);
-  const legacyArchive = await ensureLegacyStatsArchive(
-    subredditName,
-    statsPage
-  );
+  try {
+    const compileStart = Date.now();
+    const statsPage = await ensureStatsWikiPage(subredditName);
+    const legacyArchive = await ensureLegacyStatsArchive(
+      subredditName,
+      statsPage
+    );
 
-  const [overallSection, botStatusSection, postsSection, subscribersSection] =
-    await Promise.all([
-      collateOverallSection(),
-      collateBotStatusSection(),
-      collatePostsSection(),
-      collateSubscribersSection(),
-    ]);
+    const [overallSection, botStatusSection, postsSection, subscribersSection] =
+      await Promise.all([
+        collateOverallSection(),
+        collateBotStatusSection(),
+        collatePostsSection(),
+        collateSubscribersSection(),
+      ]);
 
-  const content = wikipageTemplate({
-    subredditName,
-    overallSection,
-    botStatusSection,
-    postsSection,
-    subscribersSection,
-    versionNumber: ARTEMIS_STATS_VERSION,
-    compileSeconds: ((Date.now() - compileStart) / 1000).toFixed(2),
-    updatedAtUtc: timeConvertToString(nowSeconds()),
-    announcementSection: buildAnnouncementSection(subredditName, legacyArchive),
-    navigationPrefix: '',
-  });
+    const content = wikipageTemplate({
+      subredditName,
+      overallSection,
+      botStatusSection,
+      postsSection,
+      subscribersSection,
+      versionNumber: ARTEMIS_STATS_VERSION,
+      compileSeconds: ((Date.now() - compileStart) / 1000).toFixed(2),
+      updatedAtUtc: timeConvertToString(nowSeconds()),
+      announcementSection: buildAnnouncementSection(subredditName, legacyArchive),
+      navigationPrefix: '',
+    });
 
-  await reddit.updateWikiPage({
-    subredditName,
-    page: ARTEMIS_STATS_PAGE,
-    content,
-    reason: `Updating with Devvit statistics data. Retained post snapshots: ${ARTEMIS_SETTINGS.statsPostRetention}.`,
-  });
+    await reddit.updateWikiPage({
+      subredditName,
+      page: ARTEMIS_STATS_PAGE,
+      content,
+      reason: `Updating with Devvit statistics data. Retained post snapshots: ${ARTEMIS_SETTINGS.statsPostRetention}.`,
+    });
+    await sendStatsWikiReadyNotification(subredditName);
+  } catch (err) {
+    console.warn(`Artemis Stats Wiki: could not update r/${subredditName}.`, err);
+    await sendStatsWikiSetupWarningNotification(subredditName);
+    throw err;
+  }
 }
 
 export async function updateStatsWikiPages(

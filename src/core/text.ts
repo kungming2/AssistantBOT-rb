@@ -48,6 +48,21 @@ Thanks for using the bot! If you'd like support and project updates, please visi
 `;
 }
 
+export function msgModInstallNoPublicFlairsWarning(subredditName: string): string {
+  const s = subredditName;
+  return `
+---
+
+**Post flair setup warning:** Artemis could not find any public post flairs on r/${s}. Flair enforcement works best when submitters have at least one public post flair they can choose.
+
+Please review the post flair templates here:
+
+https://www.reddit.com/mod/${s}/postflair/
+
+After creating flairs, make sure users are allowed to assign post flair when submitting.
+`;
+}
+
 /**
  * One-time message sent to moderators when the statistics wiki page
  * is first set up.
@@ -68,9 +83,23 @@ Please note that this is a *one-time message* to inform you that the statistics 
 been set up. \
 Subsequent updates will be performed silently after [midnight UTC](https://time.is/UTC). \
 This wiki page is by default only visible to moderators and is *not* listed on the subreddit's \
-[general list of wiki pages](https://www.reddit.com/r/${s}/wiki/pages/).
+[general list of wiki pages](https://www.reddit.com/r/${s}/wiki/pages/), though you may choose \
+to make it public if you wish.
 
 Have a good day!
+`;
+}
+
+export function msgModStatsWikiSetupProblem(subredditName: string): string {
+  const s = subredditName;
+  return `
+Artemis could not create or update the statistics wiki page for r/${s}.
+
+Direct statistics page link:
+
+https://www.reddit.com/r/${s}/wiki/assistantbot_statistics
+
+Please check that the app has the subreddit access needed to manage wiki pages, then try the **[Artemis] Refresh Statistics Page** menu action or wait for the next scheduled statistics update.
 `;
 }
 
@@ -450,7 +479,7 @@ export const ADV_DEFAULT = `
     # Prefer the Devvit installation setting for this value.
     # Default setting: True
     statistics_updating_enabled: True
-    # A boolean determining whether Artemis gathers user flair assignment snapshots.
+    # A boolean determining whether Artemis gathers aggregate user flair assignment counts.
     # Prefer the Devvit installation setting for this value.
     # This only applies to monthly and manual statistics updates when statistics updating is enabled.
     # Default setting: True

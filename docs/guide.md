@@ -65,7 +65,7 @@ This section is new for the Devvit page and replaces several older global summar
 | `userflair2` | XXX | XX.XX% |
 | **Total listed user flairs** | XXX | 100% |
 
-*↑ Explanation: When userflair gathering is enabled, Devvit records current user flair assignments and displays the top user flair values.*
+*↑ Explanation: When userflair gathering is enabled, Devvit records aggregate user flair assignment counts and displays the top user flair values.*
 
 ## Bot Status
 
