@@ -7,7 +7,10 @@ import {
 } from '../core/artemisStatsRecorder';
 import { updateStatsWikiPage } from '../core/artemisStatsWiki';
 import { loadSubredditConfig } from '../core/artemisConfig';
-import { sendDiscordStatisticsAlert } from '../core/artemisDiscord';
+import {
+  sendDiscordRecentPostRefreshAlert,
+  sendDiscordStatisticsAlert,
+} from '../core/artemisDiscord';
 
 type ToastResponse = {
   showToast: {
@@ -48,6 +51,11 @@ menuRoutes.post('/check-recent-posts-flair', async (c) => {
   }
 
   const result = await checkRecentPostsForMissingFlair(subredditName);
+  await sendDiscordRecentPostRefreshAlert(await loadSubredditConfig(subredditName), {
+    subredditName,
+    checked: result.checked,
+    unflaired: result.unflaired,
+  });
   return c.json<ToastResponse>(
     toast(
       `Artemis checked ${result.checked} recent posts and found ${result.unflaired} without flair.`,

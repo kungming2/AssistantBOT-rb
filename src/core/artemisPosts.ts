@@ -2,6 +2,7 @@ import { reddit, type Post } from '@devvit/web/server';
 import type { PostV2, UserV2 } from '@devvit/web/shared';
 import type { T3 } from '@devvit/shared-types/tid.js';
 import {
+  botDisclaimer,
   msgScheduleRemoval,
   msgScheduleRemovalSubject,
   msgUserFlairApproval,
@@ -158,18 +159,19 @@ async function notifyAuthorAboutFlair(
   return sendPrivateMessageSafely('flair reminder', {
     to: privateMessageRecipient(authorName),
     subject: msgUserFlairSubject(subredditName),
-    text: msgUserFlairBody({
-      username: authorName,
-      subredditName,
-      availableFlairs,
-      postPermalink: permalinkUrl(post.permalink),
-      modmailLink: msgUserFlairModmailLink(subredditName, permalinkUrl(post.permalink)),
-      removalNotice,
-      goodbye,
-      messagingInstructions: '',
-      postTitle: post.title,
-      customMessage,
-    }),
+    text:
+      msgUserFlairBody({
+        username: authorName,
+        subredditName,
+        availableFlairs,
+        postPermalink: permalinkUrl(post.permalink),
+        modmailLink: msgUserFlairModmailLink(subredditName, permalinkUrl(post.permalink)),
+        removalNotice,
+        goodbye,
+        messagingInstructions: '',
+        postTitle: post.title,
+        customMessage,
+      }) + botDisclaimer(subredditName),
   });
 }
 
@@ -187,13 +189,14 @@ async function sendApprovalNotice(
   return sendPrivateMessageSafely('flair approval notice', {
     to: privateMessageRecipient(authorName),
     subject: `Your post on r/${subredditName} has been flaired.`,
-    text: msgUserFlairApproval({
-      username: authorName,
-      approvalPhrase: 'Thanks for selecting',
-      postPermalink: permalinkUrl(post.permalink),
-      approvalDetail: strictMode ? msgUserFlairApprovalStrict(subredditName) : '',
-      goodbye: randomGoodbye(),
-    }),
+    text:
+      msgUserFlairApproval({
+        username: authorName,
+        approvalPhrase: 'Thanks for selecting',
+        postPermalink: permalinkUrl(post.permalink),
+        approvalDetail: strictMode ? msgUserFlairApprovalStrict(subredditName) : '',
+        goodbye: randomGoodbye(),
+      }) + botDisclaimer(subredditName),
   });
 }
 
@@ -212,14 +215,15 @@ async function sendScheduleRemovalNotice(
   return sendPrivateMessageSafely('schedule removal notice', {
     to: privateMessageRecipient(authorName),
     subject: msgScheduleRemovalSubject(subredditName),
-    text: msgScheduleRemoval({
-      username: authorName,
-      subredditName,
-      flairName,
-      permittedDays: permittedDays.join(', '),
-      currentDayOfWeek,
-      postPermalink: permalinkUrl(post.permalink),
-    }),
+    text:
+      msgScheduleRemoval({
+        username: authorName,
+        subredditName,
+        flairName,
+        permittedDays: permittedDays.join(', '),
+        currentDayOfWeek,
+        postPermalink: permalinkUrl(post.permalink),
+      }) + botDisclaimer(subredditName),
   });
 }
 

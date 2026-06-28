@@ -1,6 +1,9 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "assistantbot-rb",
+  "marketingAssets": {
+    "icon": "assets/icon.png"
+  },
   "server": {
     "dir": "dist/server",
     "entry": "index.cjs"
@@ -59,12 +62,7 @@
     "http": {
       "enable": true,
       "domains": [
-        "discord.com",
-        "discordapp.com",
-        "canary.discord.com",
-        "canary.discordapp.com",
-        "ptb.discord.com",
-        "ptb.discordapp.com"
+        "discord.com"
       ]
     },
     "redis": true
@@ -79,6 +77,7 @@
       "statistics_updating_enabled": {
         "type": "boolean",
         "label": "Enable Statistics Updating",
+        "defaultValue": true,
         "helpText": "Allow Artemis to run daily and monthly statistics updates, including the manual statistics page refresh. When disabled, Artemis skips statistics collection and wiki updates."
       },
       "userflair_gathering_enabled": {
@@ -101,7 +100,7 @@
       "discord_alert_flair_actions_enabled": {
         "type": "boolean",
         "label": "Send Discord Flair Action Alerts",
-        "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, or approves a previously removed flaired post. Requires a Discord webhook URL above."
+        "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, approves a previously removed flaired post, or completes the recent-post flair refresh menu action. Requires a Discord webhook URL above."
       },
       "flair_enforce_remove_posts": {
         "type": "boolean",

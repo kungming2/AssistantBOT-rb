@@ -8,10 +8,8 @@
  * ...) has been converted into a function taking named parameters,
  * returning the formatted string.
  *
- * Multi-instance-only messages (`MSG_MOD_INIT_REDIRECT`,
- * `MSG_MOD_INIT_ALREADY_MONITORED`, `MSG_MOD_INSTANCE_MIGRATION`) have
- * been dropped, since this app no longer supports multiple bot
- * instances.
+ * Legacy multi-instance-only messages have been dropped, since this app
+ * no longer supports multiple bot instances.
  */
 
 /**
@@ -23,9 +21,9 @@
 export function botDisclaimer(subredditName: string): string {
   const s = subredditName;
   return (
-    `\n\n---\n^Artemis: ^a ^moderation ^assistant ^for ^r/${s} ^| ` +
-    `[^Contact ^r/${s} ^mods](https://www.reddit.com/message/compose?to=%2Fr%2F${s}) ` +
-    `^| [^Bot ^Info/Support](https://www.reddit.com/r/AssistantBOT/)`
+    `\n\n---\nArtemis: a moderation assistant for r/${s} | ` +
+    `[Contact r/${s} mods](https://www.reddit.com/message/compose?to=%2Fr%2F${s}) ` +
+    `| [Bot Info/Support](https://www.reddit.com/r/AssistantBOT/)`
   );
 }
 
@@ -33,238 +31,20 @@ export function botDisclaimer(subredditName: string): string {
 export function msgModInstallOnboarding(subredditName: string): string {
   const s = subredditName;
   return `
-Artemis is now active on r/${s}.
+Hi there! **Artemis is now active on r/${s}.**
 
-What Artemis will do:
+Here's what Artemis can do:
 
-* Enforce post flair for new submissions as soon as Reddit sends the post-submit trigger.
-* Send flair reminder messages to submitters whose posts are submitted without flair.
-* Remove unflaired posts and approve them after flair is selected, when enabled in settings.
+* Enforce post flair for new submissions by sending flair reminder messages to submitters who submit unflaired posts.
 * Apply configured NSFW and spoiler tags for matching post flair template IDs.
-* Update the moderator-only statistics wiki page at [assistantbot_statistics](https://www.reddit.com/r/${s}/wiki/assistantbot_statistics).
+* Set certain post flairs to only be allowed on specific days.
+* Update a moderator-only statistics wiki page at [assistantbot_statistics](https://www.reddit.com/r/${s}/wiki/assistantbot_statistics).
 
-Configuration lives in the Devvit app installation settings page:
-
-https://developers.reddit.com/r/${s}/apps/assistantbot-rb
-
-For best results, also enable Reddit's built-in "Require post flair" post requirement for this subreddit.
-
-For support and project updates, visit r/AssistantBOT:
-
-https://www.reddit.com/r/AssistantBOT/
-`;
-}
-
-/**
- * Sent when Artemis accepts a moderator invite to a subreddit.
- *
- * Original Python placeholders:
- *   {0} subreddit name
- *   {1} - {4}, {6} various pre-rendered message sections
- *   {5} flair enforcing mode
- */
-export function msgModInitAccept(params: {
-  subredditName: string;
-  section1: string;
-  section2: string;
-  section3: string;
-  section4: string;
-  enforceMode: string;
-  section6: string;
-}): string {
-  const { subredditName: s, section1, section2, section3, section4, enforceMode, section6 } =
-    params;
-
-  return `
-Thanks for letting me assist the r/${s} \
-[moderator team](https://www.reddit.com/r/${s}/about/moderators)! Flair \
-enforcing is currently set to \`${enforceMode}\` [mode](https://www.reddit.com/r/\
-AssistantBOT/wiki/faq#wiki_flair_enforcing).
-
-${section4}
-
-${section1}
-
-${section3}
-
-${section2}
-
-${section6}
+**Please take some time to check out the [Devvit app installation settings page](https://developers.reddit.com/r/${s}/apps/assistantbot-rb) and configure the bot to your heart's content.** For best results, also enable Reddit's built-in "Require post flair" [setting](https://www.reddit.com/mod/${s}/posts-and-comments) for this subreddit.
 
 ---
 
-Moderator controls for this Devvit port live in the app installation settings page:
-
-https://developers.reddit.com/r/${s}/apps/assistantbot-rb
-
-Existing advanced YAML pages are read only as a legacy fallback when a matching
-installation setting has not been saved:
-
-https://www.reddit.com/r/${s}/wiki/assistantbot_config
-
-The old modmail update/revert workflow is deprecated in this Devvit port.
-
----
-
-* I update subreddit statistics daily after [midnight UTC](https://time.is/UTC).
-* Feel free to check out r/AssistantBOT for updates, statistics, support, and more!
-
-Have a good day!
-`;
-}
-
-/** Sent if a moderation invite is for a user profile, not a subreddit. */
-export const MSG_MOD_INIT_PROFILE = `
-👤 This moderation invite appears to be for a redditor's user profile. Unfortunately user \
-profiles *do not* have [post flairs](https://www.reddithelp.com/en/categories/using-reddit/\
-profiles/profile-moderation-tools) and Artemis is therefore unusable on them.
-
-If this is in error, please make a comment on r/AssistantBOT with this subreddit's name. Thanks!
-`;
-
-/** Sent if a moderation invite is for a quarantined subreddit. */
-export const MSG_MOD_INIT_QUARANTINED = `
-☣️ It appears that this subreddit may be a [quarantined community]\
-(https://www.reddithelp.com/en/categories/rules-reporting/account-and-community-restrictions\
-/quarantined-subreddits). Unfortunately, Reddit explicitly makes it difficult, if not impossible, \
-to [access data about quarantined communities through its public API](https://redd.it/3fx3gt). \
-Consequently, Artemis is unable to assist quarantined communities.
-
-Sorry for any inconvenience!
-`;
-
-/**
- * Sent when a subreddit has fewer subscribers than the minimum
- * threshold for statistics gathering.
- *
- * @param minSubscribers The minimum subscriber threshold.
- * @param subscribersShort How many subscribers short of the threshold
- *                          the subreddit currently is.
- */
-export function msgModInitMinimum(minSubscribers: number, subscribersShort: number): string {
-  return `
-⏸️ This subreddit currently has fewer than ${minSubscribers} subscribers, so I've paused statistics \
-gathering for now. I will automatically resume statistics gathering once it reaches that \
-milestone (it is currently ${subscribersShort} subscribers short).
-`;
-}
-
-/**
- * Sent to inform moderators where daily statistics will be posted.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModInitNonMinimum(subredditName: string): string {
-  return `
-📊 I will post statistics for the community daily at **[this wiki page]\
-(https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics)**. \
-(I recommend bookmarking this page for easy access.)
-`;
-}
-
-/**
- * Sent when Artemis will remove unflaired posts.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModInitStrict(subredditName: string): string {
-  return `
-🔨 I will *remove* posts without any flair and automatically \
-*restore and approve* them once a flair is selected. Unflaired posts older than 24 hours are \
-considered abandoned by their submitter and will not be restored.
-
-Please keep in mind that I do not act on moderators' posts by default, so please use a \
-throwaway account if you are testing my functions out.
-
-**I also recommend turning on the \`Require post flair\` setting in this subreddit's \
-[post requirements](https://new.reddit.com/r/${subredditName}/about/settings) for best results.**
-`;
-}
-
-/**
- * Sent when describing the legacy private-message flair workflow.
- */
-export const MSG_MOD_INIT_MESSAGING = `
-📨 The old AssistantBOT workflow where submitters replied to a private message with a flair name \
-is not available in this Devvit port. Submitters should flair their own posts through Reddit's \
-post flair UI.
-`;
-
-/** Sent when a subreddit has no public post flairs at all. */
-export const MSG_MOD_INIT_NO_FLAIRS = `
----
-
-🈳 **It appears that there are no public post flairs associated with this subreddit.** \
-If you'd like, please check out these Reddit Help articles ([New Reddit]\
-(https://mods.reddithelp.com/hc/en-us/articles/360010513191-Post-Flair), \
-[Old Reddit](https://mods.reddithelp.com/hc/en-us/articles/360002598912-Flair)) for guidance on \
-how to set up and enable post flairs for your subreddit.
-
-If you have already created post flairs, they may not be set to be \
-*publicly* selectable. If this is the case, please make sure the option for submitters to assign \
-their own post flair is selected ([New Reddit](https://i.imgur.com/86mVlzQ.png), [Old Reddit]\
-(https://i.imgur.com/V2YqXQG.png)).
-
-Artemis cannot usefully enforce post flair until submitters have at least one public post flair \
-available.
-`;
-
-/**
- * Sent when Artemis cannot maintain the statistics wiki page.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModInitNeedWiki(subredditName: string): string {
-  return `
-😕 Artemis could not create or update r/${subredditName}'s statistics wiki page. Please check the \
-Devvit app installation status and try again. Thanks!
-`;
-}
-
-/**
- * Sent when a moderator enables flair enforcing.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModRespEnable(subredditName: string): string {
-  return (
-    `🔓 Flair enforcing is now **ENABLED** on r/${subredditName}. ` +
-    `Artemis will send reminder messages to users ` +
-    `who submit posts without selecting a post flair.`
-  );
-}
-
-/**
- * Sent when a moderator disables flair enforcing.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModRespDisable(subredditName: string): string {
-  return (
-    `🔒 Flair enforcing is now **DISABLED** on r/${subredditName}. ` +
-    `Artemis will *NOT* send reminder messages ` +
-    `to users who submit posts without selecting a post flair.`
-  );
-}
-
-/**
- * Sent when a moderator toggles userflair statistics gathering.
- *
- * @param status Either `"ENABLED"` or `"DISABLED"`.
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModRespUserflair(status: "ENABLED" | "DISABLED", subredditName: string): string {
-  return `👥 Userflair statistics gathering is now **${status}** on r/${subredditName}.`;
-}
-
-/**
- * Sent when userflair statistics are unavailable.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModRespUserflairNeedFlair(subredditName: string): string {
-  return `
-😕 Userflair statistics are not available for r/${subredditName} in this Devvit port. Thanks!
+Thanks for using the bot! If you'd like support and project updates, please visit r/AssistantBOT.
 `;
 }
 
@@ -291,54 +71,6 @@ This wiki page is by default only visible to moderators and is *not* listed on t
 [general list of wiki pages](https://www.reddit.com/r/${s}/wiki/pages/).
 
 Have a good day!
-`;
-}
-
-/**
- * Message containing a link to a moderator's exported (takeout) data.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- * @param takeoutUrl URL to the hosted JSON takeout data.
- */
-export function msgModTakeout(subredditName: string, takeoutUrl: string): string {
-  return `
-🥡 Here's your takeout data from Artemis formatted in [JSON](https://en.wikipedia.org/wiki/JSON),\
- an open-standard file format that is easy for humans to read and write and easy for machines to \
-parse and generate.
-
-This link is hosted on my [Pastebin](https://pastebin.com/u/assistantbot) \
-and is **only viewable for one hour** \
-by those who have the link. The data will be automatically deleted after that, so please download \
-it before deletion.
-
-#### [Artemis Takeout Data for r/${subredditName}](${takeoutUrl})
-`;
-}
-
-/**
- * Sent when a moderator requests takeout data but none exists.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModTakeoutNone(subredditName: string): string {
-  return `
-🍽️ Unfortunately, there doesn't appear to be any data from r/${subredditName} in my database to takeout.
-`;
-}
-
-/** Sent when a moderator's query returns no valid data. */
-export const MSG_MOD_QUERY_NONE = `
-🤔 Unfortunately, there doesn't appear to be any valid data in my database from your query.
-`;
-
-/**
- * Sent when Artemis is removed from / leaves a subreddit.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function msgModLeave(subredditName: string): string {
-  return `
-👋 Artemis will no longer be active on r/${subredditName}. Have a good day!
 `;
 }
 
@@ -730,7 +462,7 @@ export const ADV_DEFAULT = `
     # Requires discord_webhook_url.
     # Default setting: False
     discord_alert_statistics_enabled: False
-    # A boolean determining whether Artemis sends Discord alerts after flair actions.
+    # A boolean determining whether Artemis sends Discord alerts after flair actions and recent-post refreshes.
     # Requires discord_webhook_url.
     # Default setting: False
     discord_alert_flair_actions_enabled: False

@@ -11,6 +11,7 @@ import {
   type LegacyMonthlyPostStats,
   type MonthlyTopPost,
   type StatsPostSnapshot,
+  type SubscriberSnapshot,
   type UserFlairSnapshot,
 } from './artemisStatsStorage';
 import { monthConvertToString, timeConvertToString } from './timekeeping';
@@ -47,6 +48,17 @@ type SubscriberChange = {
   change: number;
 };
 
+type SubscriberAverage = {
+  sampleSize: number;
+  averageDailyChange: number;
+};
+
+type SubscriberMilestoneEstimate = {
+  milestone: number;
+  daysUntil: number;
+  estimatedDate: string;
+};
+
 const UTC_ACTIVITY_BUCKETS = [
   '00:00-03:59',
   '04:00-07:59',
@@ -64,6 +76,13 @@ function formatDecimal(value: number): string {
   return value.toLocaleString('en-US', {
     maximumFractionDigits: 2,
   });
+}
+
+function formatSignedDecimal(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function formatSignedNumber(value: number): string {
@@ -377,6 +396,90 @@ function subscriberChanges(
   });
 }
 
+function recentAverageDailySubscriberChange(
+  snapshots: SubscriberSnapshot[]
+): SubscriberAverage | undefined {
+  const recent = [...snapshots]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, ARTEMIS_SETTINGS.statsSubscriberSampleSize);
+  const latest = recent[0];
+  const oldest = recent[recent.length - 1];
+  if (!latest || !oldest || recent.length < 2) {
+    return undefined;
+  }
+
+  const days = utcDayNumber(latest.date) - utcDayNumber(oldest.date);
+  if (days <= 0) {
+    return undefined;
+  }
+
+  return {
+    sampleSize: recent.length,
+    averageDailyChange: (latest.count - oldest.count) / days,
+  };
+}
+
+function nextSubscriberMilestoneEstimate(
+  snapshots: SubscriberSnapshot[],
+  average: SubscriberAverage
+): SubscriberMilestoneEstimate | undefined {
+  if (average.averageDailyChange <= 0) {
+    return undefined;
+  }
+
+  const latest = [...snapshots].sort((a, b) => b.date.localeCompare(a.date))[0];
+  if (!latest) {
+    return undefined;
+  }
+
+  const milestone = ARTEMIS_SETTINGS.statsSubscriberMilestones.find(
+    (candidate) => candidate > latest.count
+  );
+  if (milestone === undefined) {
+    return undefined;
+  }
+
+  const daysUntil = Math.ceil((milestone - latest.count) / average.averageDailyChange);
+  if (daysUntil < 0 || daysUntil > ARTEMIS_SETTINGS.statsSubscriberMilestoneUpperDays) {
+    return undefined;
+  }
+
+  return {
+    milestone,
+    daysUntil,
+    estimatedDate: new Date(Date.now() + daysUntil * 86_400_000).toISOString().slice(0, 10),
+  };
+}
+
+function formatSubscriberMilestoneProjection(snapshots: SubscriberSnapshot[]): string {
+  const average = recentAverageDailySubscriberChange(snapshots);
+  if (!average) {
+    return '';
+  }
+
+  const lines = [
+    `*Average Daily Change (last ${average.sampleSize} snapshots)*: ${formatSignedDecimal(
+      average.averageDailyChange
+    )} subscribers`,
+  ];
+
+  const estimate = nextSubscriberMilestoneEstimate(snapshots, average);
+  if (estimate) {
+    const timeUntil =
+      estimate.daysUntil <= ARTEMIS_SETTINGS.statsSubscriberMilestoneFormatDays
+        ? `${estimate.daysUntil} ${estimate.daysUntil === 1 ? 'day' : 'days'} from now`
+        : `${formatDecimal(estimate.daysUntil / 30.44)} months from now`;
+    lines.push(
+      '',
+      `*Next Subscriber Milestone (estimated)*: ${formatNumber(
+        estimate.milestone
+      )} subscribers on ${estimate.estimatedDate} (${timeUntil})`
+    );
+  }
+
+  return lines.join('\n');
+}
+
 function formatSubscriberTrendTable(
   snapshots: Awaited<ReturnType<typeof listSubscriberSnapshots>>
 ): string {
@@ -565,6 +668,7 @@ export async function collateSubscribersSection(): Promise<string> {
     return 'No subscriber snapshots have been recorded yet.';
   }
 
+  const milestoneProjection = formatSubscriberMilestoneProjection(snapshots);
   const lines = snapshots.slice(0, 90).map((snapshot, index) => {
     const previous = snapshots[index + 1];
     const change = previous ? snapshot.count - previous.count : 0;
@@ -573,6 +677,9 @@ export async function collateSubscribersSection(): Promise<string> {
   });
 
   return [
+    ...(milestoneProjection ? [milestoneProjection, ''] : []),
+    '### Log',
+    '',
     '| Date | Subscribers | Change |',
     '|------|------------:|-------:|',
     ...lines,
