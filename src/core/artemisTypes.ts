@@ -5,6 +5,11 @@ export type FlairTagsConfig = Partial<Record<'nsfw' | 'spoiler', string[]>>;
 export type FlairScheduleConfig = Record<string, string[]>;
 
 export type ArtemisSubredditConfig = {
+  statistics_updating_enabled: boolean;
+  userflair_gathering_enabled: boolean;
+  discord_webhook_url: string;
+  discord_alert_statistics_enabled: boolean;
+  discord_alert_flair_actions_enabled: boolean;
   flair_enforce_remove_posts: boolean;
   flair_enforce_moderators: boolean;
   flair_enforce_approve_posts: boolean;

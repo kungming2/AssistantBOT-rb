@@ -59,8 +59,12 @@ export function monthConvertToString(unixSeconds: number): string {
   return date.toISOString().slice(0, 7);
 }
 
-const WEEKDAY_ABBREVIATIONS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const WEEKDAY_FULL_NAMES = [
+export function normalizeUnixSeconds(timestamp: number): number {
+  return Math.floor(timestamp > 10_000_000_000 ? timestamp / 1000 : timestamp);
+}
+
+const DAY_OF_WEEK_ABBREVIATIONS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_OF_WEEK_FULL_NAMES = [
   "Sunday",
   "Monday",
   "Tuesday",
@@ -71,23 +75,23 @@ const WEEKDAY_FULL_NAMES = [
 ];
 
 /**
- * Converts a weekday abbreviation to its full English form, or
+ * Converts a day-of-week abbreviation to its full English form, or
  * vice versa.
  *
- * @param dayString Either a 3-letter weekday abbreviation (e.g. "Mon")
- *                  or a full weekday name (e.g. "Monday").
+ * @param dayString Either a 3-letter day-of-week abbreviation (e.g. "Mon")
+ *                  or a full day name (e.g. "Monday").
  * @return The full name if given an abbreviation, or the abbreviation
  *         if given a full (or longer) name.
  */
 export function convertWeekdayText(dayString: string): string {
   if (dayString.length === 3) {
-    const index = WEEKDAY_ABBREVIATIONS.findIndex(
+    const index = DAY_OF_WEEK_ABBREVIATIONS.findIndex(
       (abbr) => abbr.toLowerCase() === dayString.toLowerCase(),
     );
     if (index === -1) {
-      throw new Error(`Invalid weekday abbreviation: ${dayString}`);
+      throw new Error(`Invalid day-of-week abbreviation: ${dayString}`);
     }
-    return WEEKDAY_FULL_NAMES[index] ?? dayString;
+    return DAY_OF_WEEK_FULL_NAMES[index] ?? dayString;
   } else {
     return dayString.slice(0, 3);
   }
@@ -174,19 +178,19 @@ export function getHistoricalSeriesDays(
 
 /**
  * Checks a given flair template ID against a dictionary of what
- * flairs are allowed on what weekdays (stored in the advanced
+ * flairs are allowed on what days of the week (stored in the advanced
  * configuration). If the dictionary is empty (or the flair ID isn't
  * in it at all), anything will be approved.
  *
  * @param flairTemplateId The flair template ID to check.
- * @param flairDaysDict A record mapping weekday abbreviations (e.g.
+ * @param flairDaysDict A record mapping day-of-week abbreviations (e.g.
  *                       "Mon") to lists of flair template IDs allowed
  *                       on that day.
- * @return A tuple: `[isAllowed, permittedDays, currentWeekday]`.
+ * @return A tuple: `[isAllowed, permittedDays, currentDayOfWeek]`.
  *         `isAllowed` is `true` if the user can post with this flair
  *         today, `false` otherwise. `permittedDays` is the list of
- *         weekday abbreviations on which this flair is allowed.
- *         `currentWeekday` is today's weekday abbreviation (UTC-based
+ *         day-of-week abbreviations on which this flair is allowed.
+ *         `currentDayOfWeek` is today's day-of-week abbreviation (UTC-based
  *         "now").
  */
 export function checkFlairSchedule(
@@ -200,9 +204,9 @@ export function checkFlairSchedule(
 
   // Today's weekday, as used by the original Python (local/system time
   // via `datetime.date.today()`).
-  const currentWeekday = WEEKDAY_ABBREVIATIONS[now.getDay()];
+  const currentDayOfWeek = DAY_OF_WEEK_ABBREVIATIONS[now.getDay()];
 
-  // Get the weekday abbreviation in each bounding timezone.
+  // Get the day-of-week abbreviation in each bounding timezone.
   const westBound = getWeekdayAbbrInTimezone(now, WEST_TIMEZONE);
   const eastBound = getWeekdayAbbrInTimezone(now, EAST_TIMEZONE);
 
@@ -215,7 +219,7 @@ export function checkFlairSchedule(
   // any of them, just approve.
   const allFlairs = Object.values(flairDaysDict).flat();
   if (!allFlairs.includes(flairTemplateId)) {
-    return [true, permittedDays, currentWeekday ?? ""];
+    return [true, permittedDays, currentDayOfWeek ?? ""];
   }
 
   // Check the two-day boundaries and see if there's an overlap. If
@@ -224,14 +228,14 @@ export function checkFlairSchedule(
   const overlapDays = currentDays.filter((day) => permittedDays.includes(day));
 
   if (overlapDays.length > 0) {
-    return [true, permittedDays, currentWeekday ?? ""];
+    return [true, permittedDays, currentDayOfWeek ?? ""];
   } else {
-    return [false, permittedDays, currentWeekday ?? ""];
+    return [false, permittedDays, currentDayOfWeek ?? ""];
   }
 }
 
 /**
- * Helper: returns the 3-letter weekday abbreviation for the given
+ * Helper: returns the 3-letter day-of-week abbreviation for the given
  * instant, as observed in the given IANA timezone.
  */
 function getWeekdayAbbrInTimezone(date: Date, timeZone: string): string {

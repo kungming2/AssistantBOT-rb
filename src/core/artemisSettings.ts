@@ -11,6 +11,8 @@ export const ARTEMIS_SETTINGS = {
   statsPostListingLimit: 1_000,
   statsRecentPostLimit: 100,
   statsMonthlyTopLimit: 10,
+  statsUserFlairDisplayLimit: 20,
+  statsUserFlairPageLimit: 1_000,
 } as const;
 
 export const ARTEMIS_JOBS = {

@@ -33,12 +33,12 @@ export function postHasFlair(post: {
 export function isFlairAllowedToday(
   flairTemplateId: string | undefined,
   config: ArtemisSubredditConfig
-): { allowed: boolean; permittedDays: string[]; currentWeekday: string } {
+): { allowed: boolean; permittedDays: string[]; currentDayOfWeek: string } {
   if (!flairTemplateId) {
-    return { allowed: true, permittedDays: [], currentWeekday: '' };
+    return { allowed: true, permittedDays: [], currentDayOfWeek: '' };
   }
 
-  const [allowed, permittedDays, currentWeekday] = checkFlairSchedule(
+  const [allowed, permittedDays, currentDayOfWeek] = checkFlairSchedule(
     flairTemplateId,
     config.flair_schedule
   );
@@ -46,7 +46,7 @@ export function isFlairAllowedToday(
   return {
     allowed,
     permittedDays: permittedDays.map(convertWeekdayText),
-    currentWeekday: convertWeekdayText(currentWeekday),
+    currentDayOfWeek: convertWeekdayText(currentDayOfWeek),
   };
 }
 

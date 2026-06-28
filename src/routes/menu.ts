@@ -1,0 +1,81 @@
+import { Hono } from 'hono';
+import type { MenuItemRequest } from '@devvit/web/shared';
+import { checkRecentPostsForMissingFlair } from '../core/artemisPosts';
+import {
+  recordSubredditDailyStats,
+  recordSubredditUserFlairStats,
+} from '../core/artemisStatsRecorder';
+import { updateStatsWikiPage } from '../core/artemisStatsWiki';
+import { loadSubredditConfig } from '../core/artemisConfig';
+import { sendDiscordStatisticsAlert } from '../core/artemisDiscord';
+
+type ToastResponse = {
+  showToast: {
+    text: string;
+    appearance: 'neutral' | 'success';
+  };
+};
+
+export const menuRoutes = new Hono();
+
+function toast(text: string, appearance: ToastResponse['showToast']['appearance']): ToastResponse {
+  return {
+    showToast: {
+      text,
+      appearance,
+    },
+  };
+}
+
+async function subredditNameFromMenuRequest(request: Request): Promise<string | ToastResponse> {
+  const input = (await request.json()) as MenuItemRequest;
+  if (input.location !== 'subreddit') {
+    return toast('Use this from the subreddit menu.', 'neutral');
+  }
+
+  const subredditName = request.headers.get('devvit-subreddit-name');
+  if (!subredditName) {
+    return toast('Artemis could not identify this subreddit.', 'neutral');
+  }
+
+  return subredditName;
+}
+
+menuRoutes.post('/check-recent-posts-flair', async (c) => {
+  const subredditName = await subredditNameFromMenuRequest(c.req.raw);
+  if (typeof subredditName !== 'string') {
+    return c.json<ToastResponse>(subredditName, 200);
+  }
+
+  const result = await checkRecentPostsForMissingFlair(subredditName);
+  return c.json<ToastResponse>(
+    toast(
+      `Artemis checked ${result.checked} recent posts and found ${result.unflaired} without flair.`,
+      'success'
+    ),
+    200
+  );
+});
+
+menuRoutes.post('/refresh-statistics-page', async (c) => {
+  const subredditName = await subredditNameFromMenuRequest(c.req.raw);
+  if (typeof subredditName !== 'string') {
+    return c.json<ToastResponse>(subredditName, 200);
+  }
+
+  const updated = await recordSubredditDailyStats(subredditName);
+  if (!updated) {
+    return c.json<ToastResponse>(
+      toast(`Statistics updating is disabled for r/${subredditName}.`, 'neutral'),
+      200
+    );
+  }
+
+  await recordSubredditUserFlairStats(subredditName);
+  await updateStatsWikiPage(subredditName);
+  await sendDiscordStatisticsAlert(await loadSubredditConfig(subredditName), subredditName, 'manual');
+  return c.json<ToastResponse>(
+    toast(`Artemis refreshed the statistics page for r/${subredditName}.`, 'success'),
+    200
+  );
+});

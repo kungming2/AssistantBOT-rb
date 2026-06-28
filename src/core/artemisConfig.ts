@@ -9,7 +9,7 @@ import {
 } from './artemisInstallSettings';
 import type { ArtemisSubredditConfig, FlairScheduleConfig, FlairTagsConfig } from './artemisTypes';
 
-const WEEKDAYS = new Set(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+const DAYS_OF_WEEK = new Set(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
 const TAGS = new Set(['nsfw', 'spoiler']);
 
 const INSTALL_SCHEDULE_RULES = [
@@ -42,13 +42,13 @@ function textToStringList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function asWeekdayList(value: unknown): string[] {
+function asDayOfWeekList(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value
-    .filter((item): item is string => typeof item === 'string' && WEEKDAYS.has(item))
+    .filter((item): item is string => typeof item === 'string' && DAYS_OF_WEEK.has(item))
     .filter((item, index, items) => items.indexOf(item) === index);
 }
 
@@ -74,7 +74,7 @@ function normalizeFlairSchedule(value: unknown): FlairScheduleConfig {
 
   const schedule: FlairScheduleConfig = {};
   for (const [key, item] of Object.entries(value)) {
-    if (WEEKDAYS.has(key)) {
+    if (DAYS_OF_WEEK.has(key)) {
       schedule[key] = asStringList(item);
     }
   }
@@ -98,6 +98,11 @@ function parseConfig(content: string): ArtemisSubredditConfig {
 
   const data = loaded as Record<string, unknown>;
   return {
+    statistics_updating_enabled: data.statistics_updating_enabled !== false,
+    userflair_gathering_enabled: data.userflair_gathering_enabled !== false,
+    discord_webhook_url: limitString(data.discord_webhook_url, 500).trim(),
+    discord_alert_statistics_enabled: data.discord_alert_statistics_enabled === true,
+    discord_alert_flair_actions_enabled: data.discord_alert_flair_actions_enabled === true,
     flair_enforce_remove_posts: data.flair_enforce_remove_posts !== false,
     flair_enforce_moderators: data.flair_enforce_moderators === true,
     flair_enforce_approve_posts: data.flair_enforce_approve_posts !== false,
@@ -127,13 +132,13 @@ function buildInstallSchedule(
 
   for (const [idsKey, daysKey] of INSTALL_SCHEDULE_RULES) {
     const flairIds = textToStringList(installSettings[idsKey]);
-    const weekdays = asWeekdayList(installSettings[daysKey]);
-    if (flairIds.length === 0 || weekdays.length === 0) {
+    const daysOfWeek = asDayOfWeekList(installSettings[daysKey]);
+    if (flairIds.length === 0 || daysOfWeek.length === 0) {
       continue;
     }
 
-    for (const weekday of weekdays) {
-      schedule[weekday] = Array.from(new Set([...(schedule[weekday] ?? []), ...flairIds]));
+    for (const dayOfWeek of daysOfWeek) {
+      schedule[dayOfWeek] = Array.from(new Set([...(schedule[dayOfWeek] ?? []), ...flairIds]));
     }
   }
 
@@ -146,6 +151,23 @@ async function applyInstallSettings(
   const installSettings = await loadInstallSettings();
   const merged = { ...config };
 
+  if (hasInstallSetting(installSettings, 'statistics_updating_enabled')) {
+    merged.statistics_updating_enabled = installSettings.statistics_updating_enabled === true;
+  }
+  if (hasInstallSetting(installSettings, 'userflair_gathering_enabled')) {
+    merged.userflair_gathering_enabled = installSettings.userflair_gathering_enabled === true;
+  }
+  if (hasInstallSetting(installSettings, 'discord_webhook_url')) {
+    merged.discord_webhook_url = limitString(installSettings.discord_webhook_url, 500).trim();
+  }
+  if (hasInstallSetting(installSettings, 'discord_alert_statistics_enabled')) {
+    merged.discord_alert_statistics_enabled =
+      installSettings.discord_alert_statistics_enabled === true;
+  }
+  if (hasInstallSetting(installSettings, 'discord_alert_flair_actions_enabled')) {
+    merged.discord_alert_flair_actions_enabled =
+      installSettings.discord_alert_flair_actions_enabled === true;
+  }
   if (hasInstallSetting(installSettings, 'flair_enforce_remove_posts')) {
     merged.flair_enforce_remove_posts = installSettings.flair_enforce_remove_posts === true;
   }

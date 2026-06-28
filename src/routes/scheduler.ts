@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { TaskRequest, TaskResponse } from '@devvit/web/server';
 import { ARTEMIS_JOBS } from '../core/artemisSettings';
+import { loadSubredditConfig } from '../core/artemisConfig';
+import { sendDiscordStatisticsAlert } from '../core/artemisDiscord';
 import { reconcileFilteredPosts } from '../core/artemisPosts';
 import {
   recordDailyStatsForInstalledSubreddits,
@@ -33,6 +35,13 @@ schedulerRoutes.post('/artemis-record-daily-stats', async (c) => {
 
   const subredditNames = await recordDailyStatsForInstalledSubreddits();
   await updateStatsWikiPages(subredditNames);
+  for (const subredditName of subredditNames) {
+    await sendDiscordStatisticsAlert(
+      await loadSubredditConfig(subredditName),
+      subredditName,
+      'daily'
+    );
+  }
   return c.json<TaskResponse>(TASK_OK, 200);
 });
 
@@ -46,5 +55,12 @@ schedulerRoutes.post('/artemis-record-monthly-stats', async (c) => {
 
   const subredditNames = await recordMonthlyStatsForInstalledSubreddits();
   await updateStatsWikiPages(subredditNames);
+  for (const subredditName of subredditNames) {
+    await sendDiscordStatisticsAlert(
+      await loadSubredditConfig(subredditName),
+      subredditName,
+      'monthly'
+    );
+  }
   return c.json<TaskResponse>(TASK_OK, 200);
 });

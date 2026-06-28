@@ -27,6 +27,26 @@
       }
     }
   },
+  "menu": {
+    "items": [
+      {
+        "label": "[Artemis] Check Recent Posts for Missing Flair",
+        "description": "Check up to 100 recent posts for missing flair",
+        "forUserType": "moderator",
+        "location": ["subreddit"],
+        "endpoint": "/internal/menu/check-recent-posts-flair",
+        "postFilter": "none"
+      },
+      {
+        "label": "[Artemis] Refresh Statistics Page",
+        "description": "Record recent subreddit statistics and manually update the statistics wiki page",
+        "forUserType": "moderator",
+        "location": ["subreddit"],
+        "endpoint": "/internal/menu/refresh-statistics-page",
+        "postFilter": "none"
+      }
+    ]
+  },
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch"
@@ -36,6 +56,17 @@
       "enable": true,
       "scope": "moderator"
     },
+    "http": {
+      "enable": true,
+      "domains": [
+        "discord.com",
+        "discordapp.com",
+        "canary.discord.com",
+        "canary.discordapp.com",
+        "ptb.discord.com",
+        "ptb.discordapp.com"
+      ]
+    },
     "redis": true
   },
   "settings": {
@@ -43,12 +74,39 @@
       "flair_enforcement_enabled": {
         "type": "boolean",
         "label": "Enable Flair Enforcement",
-        "helpText": "Enabling this option will allow Artemis to remind users about missing post flair and remove unflaired posts."
+        "helpText": "Enabling this option will allow Artemis to remind users about missing post flair and optionally, to remove unflaired posts."
+      },
+      "statistics_updating_enabled": {
+        "type": "boolean",
+        "label": "Enable Statistics Updating",
+        "helpText": "Allow Artemis to run daily and monthly statistics updates, including the manual statistics page refresh. When disabled, Artemis skips statistics collection and wiki updates."
+      },
+      "userflair_gathering_enabled": {
+        "type": "boolean",
+        "label": "Enable Userflair Gathering",
+        "helpText": "Allow Artemis to gather user flair assignments during monthly statistics updates and manual statistics page refreshes. When disabled, Artemis clears stored user flair snapshots and skips user flair enumeration."
+      },
+      "discord_webhook_url": {
+        "type": "string",
+        "label": "Discord Webhook URL",
+        "helpText": "Discord webhook URL for optional Artemis alerts.",
+        "placeholder": "https://discord.com/api/webhooks/...",
+        "validationEndpoint": "/internal/settings/validate-discord-webhook-url"
+      },
+      "discord_alert_statistics_enabled": {
+        "type": "boolean",
+        "label": "Send Discord Statistics Alerts",
+        "helpText": "Send a Discord alert after a daily, monthly, or manual statistics update finishes. Requires a Discord webhook URL above."
+      },
+      "discord_alert_flair_actions_enabled": {
+        "type": "boolean",
+        "label": "Send Discord Flair Action Alerts",
+        "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, or approves a previously removed flaired post. Requires a Discord webhook URL above."
       },
       "flair_enforce_remove_posts": {
         "type": "boolean",
         "label": "Remove Unflaired Posts",
-        "helpText": "Only applies when flair enforcement is enabled. Remove posts that remain unflaired; when disabled, Artemis sends flair reminder messages without removing posts."
+        "helpText": "Only applies when flair enforcement is enabled. Remove posts that were not unflaired; when disabled, Artemis sends flair reminder messages without removing posts."
       },
       "flair_enforce_moderators": {
         "type": "boolean",
@@ -57,18 +115,18 @@
       },
       "flair_enforce_approve_posts": {
         "type": "boolean",
-        "label": "Approve Flaired Posts",
-        "helpText": "Approve posts that Artemis has previously removed once they receive a post flair. Only applies when unflaired post removal is enabled."
+        "label": "Automatically Approve Flaired Posts",
+        "helpText": "Automatically approve posts that Artemis has previously removed once they receive a post flair. Only applies when unflaired post removal is enabled. Disabling this will mean that moderators must manually approve removed posts."
       },
       "flair_enforce_custom_message": {
         "type": "paragraph",
         "label": "Custom Flair Reminder Message",
-        "helpText": "Provide a custom message to include in the bot's flair reminder messages. Messages over 500 characters will be truncated. (optional)"
+        "helpText": "Provide custom text to include in the bot's flair reminder messages. Text over 500 characters will be truncated. (optional)"
       },
       "custom_goodbye": {
         "type": "paragraph",
         "label": "Custom Goodbye",
-        "helpText": "A short sign-off message used in flair reminder messages. Values over 20 characters are truncated. (optional)"
+        "helpText": "A short sign-off text used in flair reminder messages. Text over 20 characters are truncated. Lowercase is suggested. (optional)"
       },
       "flair_enforce_whitelist": {
         "type": "paragraph",
@@ -77,24 +135,18 @@
       },
       "flair_tag_nsfw": {
         "type": "paragraph",
-        "label": "NSFW Flair Template IDs",
-        "helpText": "Post flair template IDs listed here will be automatically tagged as 'NSFW'. Separate IDs with commas or new lines."
+        "label": "Auto-NSFW Flair Template IDs",
+        "helpText": "Post flair template IDs listed here will be automatically tagged as 'NSFW'. Separate IDs with commas or new lines. (optional)"
       },
       "flair_tag_spoiler": {
         "type": "paragraph",
-        "label": "Spoiler Flair Template IDs",
+        "label": "Auto-Spoiler Flair Template IDs",
         "helpText": "Post flair template IDs listed here will be automatically tagged as 'spoiler'. Separate IDs with commas or new lines. (optional)"
-      },
-      "flair_schedule_notes": {
-        "type": "paragraph",
-        "label": "Flair Schedule Notes",
-        "helpText": "Completely optional, but Artemis allows you to set flairs (up to five) to only be allowed on certain days.",
-        "placeholder": "For example, a 'Memes' flair can be set to only be allowed on Mondays, or a 'Self-Promotion' flair on Sundays."
       },
       "flair_schedule_rule_1_ids": {
         "type": "paragraph",
         "label": "Flair Schedule 1: Template IDs",
-        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
+        "helpText": "Optional. Artemis allows up to five groups of flairs to only be allowed on certain days. For example, a 'Memes' flair can be allowed only on Mondays, or a 'Self-Promotion' flair only on Sundays. Enter post flair template IDs for this schedule, separated with commas or new lines."
       },
       "flair_schedule_rule_1_days": {
         "type": "multiSelect",

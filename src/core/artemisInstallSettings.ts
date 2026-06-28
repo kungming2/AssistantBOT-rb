@@ -2,6 +2,11 @@ import { settings } from '@devvit/web/server';
 
 export type ArtemisInstallSettings = {
   flair_enforcement_enabled?: boolean;
+  statistics_updating_enabled?: boolean;
+  userflair_gathering_enabled?: boolean;
+  discord_webhook_url?: string;
+  discord_alert_statistics_enabled?: boolean;
+  discord_alert_flair_actions_enabled?: boolean;
   flair_enforce_remove_posts?: boolean;
   flair_enforce_moderators?: boolean;
   flair_enforce_approve_posts?: boolean;

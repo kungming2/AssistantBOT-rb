@@ -348,7 +348,7 @@ export function msgModLeave(subredditName: string): string {
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgUserFlairSubject(subredditName: string): string {
-  return `[Notification] ⚠️ Your post on r/${subredditName} needs a post flair!`;
+  return `⚠️ Your post on r/${subredditName} needs a post flair!`;
 }
 
 /**
@@ -402,30 +402,17 @@ This is a friendly reminder that this community's moderators have \
 asked for all posts to have a *post flair* \
 (a relevant tag or category).
 
-${customMessage}
+**Message from the moderators:** ${customMessage}
 
 ${removalNotice}
 
-**You can select a post flair by**:
-
-* ➡️️ Using Reddit's interface to pick the one you want. \
-View a GIF below to show you how!
-    * *[Mobile](https://i.imgur.com/qPJlLPH.gifv)* • \
-*[Desktop (New)](https://i.imgur.com/1jzmEqK.gifv)* • \
-*[Desktop (Old)](https://i.imgur.com/V8NYT6N.gifv)* • \
-*[Mobile Web](https://i.imgur.com/Hna2rD7.gifv)*
-    * Third-party apps: *[Apollo](https://i.imgur.com/X4EaiI1.gifv)*  \
-• *[BaconReader](https://i.imgur.com/ZJnBmEk.gifv)* • \
-*[Boost](https://i.imgur.com/8h4Zpw3.gifv)* • \
-*[Relay](https://i.imgur.com/2g7s4jk.gifv)* • \
-*[RIF](https://i.imgur.com/179de1o.gifv)*
 ${messagingInstructions}
 
 **The following post flairs are available**:
 
 ${availableFlairs}
 
-Post flairs help keep this community organized and allow subscribers to easily sort through the \
+Post flairs help keep this community organized and allow community members to easily sort through the \
 posts they want to see. [Please contact the mods of r/${s} if you have any questions.](${modmailLink}) \
 Thank you very much, and ${goodbye}!
 `;
@@ -457,8 +444,8 @@ export function msgUserFlairModmailLink(subredditName: string, postPermalink: st
 
 /** Notice shown when a post has been removed and will be auto-restored. */
 export const MSG_USER_FLAIR_REMOVAL =
-  "**Your post has been removed but will be automatically restored if you " +
-  "select a flair for it within 24 hours.** " +
+  "**Your post has been removed but will be automatically restored when you " +
+  "select a flair for it.** " +
   "We apologize for the inconvenience.\n\n";
 
 /** Notice shown when a post has been removed but requires manual mod restoration. */
@@ -512,7 +499,7 @@ export function msgUserFlairApprovalStrict(subredditName: string): string {
  * @param subredditName The subreddit's name (no `r/` prefix).
  */
 export function msgScheduleRemovalSubject(subredditName: string): string {
-  return `[Notification] 🗓️️ Your post on r/${subredditName} is not on a scheduled day.`;
+  return `🗓️️ Your post on r/${subredditName} is not on a scheduled day.`;
 }
 
 /**
@@ -523,8 +510,8 @@ export function msgScheduleRemovalSubject(subredditName: string): string {
  *   {0} username
  *   {1} subreddit name
  *   {2} flair name
- *   {3} list of permitted weekdays
- *   {4} current weekday
+ *   {3} list of permitted days
+ *   {4} current day of the week
  *   {5} post permalink
  */
 export function msgScheduleRemoval(params: {
@@ -532,10 +519,10 @@ export function msgScheduleRemoval(params: {
   subredditName: string;
   flairName: string;
   permittedDays: string;
-  currentWeekday: string;
+  currentDayOfWeek: string;
   postPermalink: string;
 }): string {
-  const { username, subredditName: s, flairName, permittedDays, currentWeekday, postPermalink } =
+  const { username, subredditName: s, flairName, permittedDays, currentDayOfWeek, postPermalink } =
     params;
 
   return `
@@ -543,14 +530,14 @@ Hey there u/${username},
 
 Thanks for submitting [your post](${postPermalink}) to r/${s}! This community asks \
 that posts flaired as **${flairName}** only be submitted on the following \
-weekdays:
+days:
 
 * **${permittedDays}**
 
-Your post has been removed as it is currently **${currentWeekday}**, and feel free \
+Your post has been removed as it is currently **${currentDayOfWeek}**, and feel free \
 to check out [r/${s}'s community rules]\
 (https://www.reddit.com/r/${s}/about/rules) for more information. \
-Please re-submit your ${flairName} post on a suitable scheduled weekday and \
+Please re-submit your ${flairName} post on a suitable scheduled day and \
 thank you for stopping by!
 `;
 }
@@ -578,7 +565,7 @@ subreddit has at least ${minSubscribers} subscribers.*
  *   {1} bot status section
  *   {2} posts section
  *   {3} subscribers section
- *   {4} traffic section
+ *   {4} overall section
  *   {5} Artemis version number
  *   {6} compile time in seconds
  *   {7} last-updated timestamp (UTC)
@@ -587,10 +574,10 @@ subreddit has at least ${minSubscribers} subscribers.*
  */
 export function wikipageTemplate(params: {
   subredditName: string;
+  overallSection: string;
   botStatusSection: string;
   postsSection: string;
   subscribersSection: string;
-  trafficSection: string;
   versionNumber: string;
   compileSeconds: number | string;
   updatedAtUtc: string;
@@ -599,10 +586,10 @@ export function wikipageTemplate(params: {
 }): string {
   const {
     subredditName: s,
+    overallSection,
     botStatusSection,
     postsSection,
     subscribersSection,
-    trafficSection,
     versionNumber,
     compileSeconds,
     updatedAtUtc,
@@ -629,6 +616,10 @@ ${announcementSection}
 
 ---
 
+## Overall
+
+${overallSection}
+
 ## Bot Status
 
 ${botStatusSection}
@@ -640,10 +631,6 @@ ${postsSection}
 ## Subscribers
 
 ${subscribersSection}
-
-## [Traffic](https://www.reddit.com/r/${s}/about/traffic/)
-
-${trafficSection}
 `;
 }
 
@@ -685,7 +672,6 @@ export const GOODBYE_PHRASES: readonly string[] = [
   "So long",
   "Stay awesome",
   "Stay classy",
-  "Stay healthy",
   "Stay safe",
   "Stay well",
   "Take care",
@@ -725,6 +711,29 @@ export const ADV_DEFAULT = `
     #
     # Everything below must be written in valid YAML, which is the same syntax
     # that AutoModerator uses.
+    # -------------------
+    # STATISTICS SETTINGS
+    # -------------------
+    # A boolean determining whether Artemis runs daily/monthly statistics updates.
+    # Prefer the Devvit installation setting for this value.
+    # Default setting: True
+    statistics_updating_enabled: True
+    # A boolean determining whether Artemis gathers user flair assignment snapshots.
+    # Prefer the Devvit installation setting for this value.
+    # This only applies to monthly and manual statistics updates when statistics updating is enabled.
+    # Default setting: True
+    userflair_gathering_enabled: True
+    # Optional Discord webhook URL used for statistics and flair action alerts.
+    # Prefer the Devvit installation setting for this value.
+    discord_webhook_url: ""
+    # A boolean determining whether Artemis sends Discord alerts after statistics updates.
+    # Requires discord_webhook_url.
+    # Default setting: False
+    discord_alert_statistics_enabled: False
+    # A boolean determining whether Artemis sends Discord alerts after flair actions.
+    # Requires discord_webhook_url.
+    # Default setting: False
+    discord_alert_flair_actions_enabled: False
     # --------------------------
     # FLAIR ENFORCEMENT SETTINGS
     # --------------------------
@@ -762,10 +771,10 @@ export const ADV_DEFAULT = `
     # Each key takes a *list* of post flair IDs.
     # If a submission is flaired with one, it will be tagged with the corresponding attribute.
     flair_tags: {}
-    # A dictionary with up to 7 keys of weekday abbreviations: \`Sun\`, \`Mon\`, etc.
+    # A dictionary with up to 7 keys for days of the week: \`Sun\`, \`Mon\`, etc.
     # Prefer the Devvit installation setting for these values.
     # Each key takes a *list* of post flair IDs. Submissions with such flairs will be 
-    # removed if they are posted on any day except the weekdays specified.
+    # removed if they are posted on any day except the specified days.
     flair_schedule: {}
     # A custom goodbye phrase for the bot to use in its flair enforcement messages to users.
     # Prefer the Devvit installation setting for this value.

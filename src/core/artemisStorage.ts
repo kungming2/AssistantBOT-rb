@@ -16,6 +16,7 @@ const DAILY_COUNTERS_PREFIX = 'artemis:daily-counters';
 type SubredditState = {
   flairEnforcementEnabled: boolean;
   installedAt: number;
+  legacyStatsArchived?: boolean;
 };
 
 type PostOperation = {
@@ -50,6 +51,7 @@ export async function initializeSubredditState(subredditName: string): Promise<v
   const state: SubredditState = {
     flairEnforcementEnabled: true,
     installedAt: Math.floor(Date.now() / 1000),
+    legacyStatsArchived: false,
   };
 
   await redis.hSet(SUBREDDIT_STATE_KEY, {
@@ -81,6 +83,30 @@ export async function setFlairEnforcementEnabled(
   const state: SubredditState = {
     installedAt: current?.installedAt ?? Math.floor(Date.now() / 1000),
     flairEnforcementEnabled: enabled,
+    legacyStatsArchived: current?.legacyStatsArchived ?? false,
+  };
+
+  await redis.hSet(SUBREDDIT_STATE_KEY, {
+    [normalized]: JSON.stringify(state),
+  });
+}
+
+export async function hasLegacyStatsArchive(subredditName: string): Promise<boolean> {
+  const normalized = subredditName.toLowerCase();
+  const state = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
+  return state?.legacyStatsArchived ?? false;
+}
+
+export async function setLegacyStatsArchived(
+  subredditName: string,
+  archived: boolean
+): Promise<void> {
+  const normalized = subredditName.toLowerCase();
+  const current = parseJson<SubredditState>(await redis.hGet(SUBREDDIT_STATE_KEY, normalized));
+  const state: SubredditState = {
+    installedAt: current?.installedAt ?? Math.floor(Date.now() / 1000),
+    flairEnforcementEnabled: current?.flairEnforcementEnabled ?? true,
+    legacyStatsArchived: archived,
   };
 
   await redis.hSet(SUBREDDIT_STATE_KEY, {

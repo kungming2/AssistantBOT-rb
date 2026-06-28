@@ -9,16 +9,27 @@ import type {
 import { reddit } from '@devvit/web/server';
 import type { T5 } from '@devvit/shared-types/tid.js';
 import { handlePostFlairUpdated, handlePostSubmitted } from '../core/artemisPosts';
+import { loadSubredditConfig } from '../core/artemisConfig';
 import { initializeSubredditState } from '../core/artemisStorage';
 import { recordStatsPostFromTrigger } from '../core/artemisStatsRecorder';
 import { initializeStatsWikiPage } from '../core/artemisStatsWiki';
 import { msgModInstallOnboarding } from '../core/text';
+import type { ArtemisSubredditConfig } from '../core/artemisTypes';
 
 export const triggers = new Hono();
 
 async function initializeSubredditInstall(subredditName: string): Promise<void> {
   await initializeSubredditState(subredditName);
-  await initializeStatsWikiPage(subredditName);
+  const config = await loadSubredditConfig(subredditName);
+  if (config.statistics_updating_enabled) {
+    await initializeStatsWikiPage(subredditName);
+  }
+}
+
+async function loadTriggerConfig(
+  subredditName: string | undefined
+): Promise<ArtemisSubredditConfig | undefined> {
+  return subredditName ? loadSubredditConfig(subredditName) : undefined;
 }
 
 async function sendInstallOnboardingNotification(
@@ -74,14 +85,18 @@ triggers.post('/on-app-upgrade', async (c) => {
 
 triggers.post('/on-post-submit', async (c) => {
   const input = await c.req.json<OnPostSubmitRequest>();
-  await recordStatsPostFromTrigger({
-    post: input.post,
-    subredditName: input.subreddit?.name,
-  });
+  const config = await loadTriggerConfig(input.subreddit?.name);
+  if (config?.statistics_updating_enabled !== false) {
+    await recordStatsPostFromTrigger({
+      post: input.post,
+      subredditName: input.subreddit?.name,
+    });
+  }
   await handlePostSubmitted({
     post: input.post,
     author: input.author,
     subredditName: input.subreddit?.name,
+    ...(config ? { config } : {}),
   });
 
   return c.json<TriggerResponse>(
@@ -94,14 +109,18 @@ triggers.post('/on-post-submit', async (c) => {
 
 triggers.post('/on-post-flair-update', async (c) => {
   const input = await c.req.json<OnPostFlairUpdateRequest>();
-  await recordStatsPostFromTrigger({
-    post: input.post,
-    subredditName: input.subreddit?.name,
-  });
+  const config = await loadTriggerConfig(input.subreddit?.name);
+  if (config?.statistics_updating_enabled !== false) {
+    await recordStatsPostFromTrigger({
+      post: input.post,
+      subredditName: input.subreddit?.name,
+    });
+  }
   await handlePostFlairUpdated({
     post: input.post,
     author: input.author,
     subredditName: input.subreddit?.name,
+    ...(config ? { config } : {}),
   });
 
   return c.json<TriggerResponse>(
