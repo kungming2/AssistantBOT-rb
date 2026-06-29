@@ -236,7 +236,7 @@ function formatMonthlySummaryTable(summaries: Map<string, MonthlyPostSummary>): 
     );
 
   return [
-    '### Monthly Summary',
+    '### General Monthly Summary',
     '',
     '| Month | Posts | Top Flairs |',
     '|-------|------:|------------|',

@@ -8,10 +8,20 @@ Artemis is for subreddit moderators who want help keeping posts organized. It ch
 
 Artemis also maintains a moderator-only statistics wiki page at `r/<subreddit>/wiki/assistantbot_statistics`. The statistics page summarizes post activity, subscriber snapshots, top posts, flair usage, bot actions, and optional user flair distribution data.
 
+Complementary Features:
+
+Reddit's built-in moderation tools have improved dramatically since AssistantBOT was first deployed in 2018. Artemis adds the following features beyond what Reddit provides natively:
+
+- Flair scheduling - only allow memes on Monday? You can limit selected post flairs to specific days of the week.
+- Flair-based NSFW and spoiler tagging - automatically mark posts NSFW or spoiler when users select configured flair template IDs.
+- Persistent statistics over time - Reddit's Insights use rolling lookback windows, while Artemis keeps subreddit-local historical snapshots across scheduled updates.
+- UTC posting activity - see which UTC time blocks have the most posting activity in your community.
+- Post flair and user flair summaries - see which post flairs are most common, plus user flair distribution when user flair gathering is enabled.
+
 Important operational notes:
 
 - For best results, also enable Reddit's built-in **Require post flair** post requirement. Artemis is a backup and enforcement layer for posts that still reach the subreddit without flair, which is possible on some clients.
-- Current configuration lives in the Devvit app installation settings page.
+- The bot's current configuration lives in the Devvit app installation settings page.
 - Older `assistantbot_config` wiki pages are read only as a compatibility fallback, though any saved Devvit settings will override matching configuration settings saved on the wiki.
 - Existing Python-era `assistantbot_statistics` pages are archived to `assistantbot_statistics_legacy` before Artemis writes the current Devvit statistics page for the first time. The legacy page will be linked to from the current page.
 
@@ -133,6 +143,10 @@ Additional documentation can be found in [docs](docs/index.md):
 - [FAQ](docs/faq.md) for moderator-facing setup and operations questions.
 - [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
 - [Version History](docs/version_history.md) for the full historical changelog.
+
+## License
+
+AssistantBOT Reborn is licensed under the [MIT License](LICENSE).
 
 ## Changelog
 

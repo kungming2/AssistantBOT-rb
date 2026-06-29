@@ -129,7 +129,7 @@ export async function sendDiscordStatisticsAlert(
     embeds: [
       {
         title,
-        description: `Artemis completed updating the [statistic page](https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics) for r/${subredditName}.`,
+        description: `Artemis completed updating the [statistics page](https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics) for r/${subredditName}.`,
         url: `https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics`,
         color:
           alertType === 'manual'
