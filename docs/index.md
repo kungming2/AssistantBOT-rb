@@ -1,9 +1,9 @@
-# AssistantBOT Reborn Docs
+# AssistantBOT Reborn Documentation
 
-These docs describe the current Devvit/TypeScript app. The root [README](../README.md) stays focused on installation and high-level behavior.
+These docs describe the current Devvit/TypeScript app, but with some reference to the previous Python version of the bot for compatibility.
 
 ## Reference Pages
 
-- [FAQ](faq.md): moderator-facing answers for installing, configuring, and operating Artemis.
-- [Deprecated Python behavior](deprecated.md): old workflows and statistics sections that are not part of the Devvit port.
-- [Development notes](development.md): maintainer commands, Devvit surfaces, and source layout.
+- [Deprecated](deprecated.md): old workflows and statistics sections that are not part of the Devvit port.
+- [FAQ](faq.md): answers for moderators in configuring and operating Artemis.
+- [Version History](version_history.md): non-exhaustive changelog for Artemis and the Devvit rebuild.

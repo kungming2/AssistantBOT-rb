@@ -215,11 +215,20 @@ export function defaultSubredditConfig(): ArtemisSubredditConfig {
   return parseConfig(ADV_DEFAULT);
 }
 
-export async function loadSubredditConfig(subredditName: string): Promise<ArtemisSubredditConfig> {
+export type ArtemisSubredditConfigLoadResult = {
+  config: ArtemisSubredditConfig;
+  legacyConfigApplied: boolean;
+};
+
+export async function loadSubredditConfigWithSource(
+  subredditName: string
+): Promise<ArtemisSubredditConfigLoadResult> {
   let config: ArtemisSubredditConfig;
+  let legacyConfigApplied = false;
   try {
     const page = await reddit.getWikiPage(subredditName, ARTEMIS_CONFIG_PAGE);
     config = parseConfig(page.content);
+    legacyConfigApplied = true;
   } catch (err) {
     console.info(
       `Artemis Config: using defaults for r/${subredditName}; wiki config unavailable.`,
@@ -228,5 +237,12 @@ export async function loadSubredditConfig(subredditName: string): Promise<Artemi
     config = defaultSubredditConfig();
   }
 
-  return applyInstallSettings(config);
+  return {
+    config: await applyInstallSettings(config),
+    legacyConfigApplied,
+  };
+}
+
+export async function loadSubredditConfig(subredditName: string): Promise<ArtemisSubredditConfig> {
+  return (await loadSubredditConfigWithSource(subredditName)).config;
 }

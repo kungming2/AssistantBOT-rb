@@ -100,15 +100,15 @@
         "placeholder": "https://discord.com/api/webhooks/...",
         "validationEndpoint": "/internal/settings/validate-discord-webhook-url"
       },
-      "discord_alert_statistics_enabled": {
-        "type": "boolean",
-        "label": "Send Discord Statistics Alerts",
-        "helpText": "Send a Discord alert after a daily, monthly, or manual statistics update finishes. Requires a Discord webhook URL above."
-      },
       "discord_alert_flair_actions_enabled": {
         "type": "boolean",
         "label": "Send Discord Flair Action Alerts",
         "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, approves a previously removed flaired post, or completes the recent-post flair refresh menu action. Requires a Discord webhook URL above."
+      },
+      "discord_alert_statistics_enabled": {
+        "type": "boolean",
+        "label": "Send Discord Statistics Alerts",
+        "helpText": "Send a Discord alert after a daily, monthly, or manual statistics update finishes. Requires a Discord webhook URL above."
       },
       "flair_enforce_remove_posts": {
         "type": "boolean",

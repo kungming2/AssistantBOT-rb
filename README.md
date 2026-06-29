@@ -1,56 +1,29 @@
 # AssistantBOT Reborn
 
-AssistantBOT Reborn is a Devvit/TypeScript port of [Artemis](https://github.com/kungming2/AssistantBOT), the Reddit moderator assistant formerly run as `u/AssistantBOT`.
+## Overview
 
-Artemis helps subreddit moderators keep posts organized with post flair enforcement and gives communities a moderator-only statistics wiki page with post and subscriber activity summaries.
+**AssistantBOT Reborn** is the Devvit version of Artemis, the Reddit moderation assistant formerly run as `u/AssistantBOT`. This Devvit version has been created to allow folks still using the Python version of the bot to easily transition to a native app equivalent for the Reddit platform, while retaining behavior they're already familiar with. This version is installed as a Devvit app on each subreddit.
 
-The old Python bot handled several concerns from one long-running process and a shared SQLite database. This app is being rebuilt as a subreddit-installed Devvit app, so state is stored in Devvit Redis per installation and work is driven by Reddit triggers plus scheduled jobs.
+Artemis is for subreddit moderators who want help keeping posts organized. It checks new posts for missing or disallowed post flair, can remind submitters to choose flair, can remove unflaired posts when configured, and can approve those posts again after an allowed flair is selected. It can also apply NSFW or spoiler tags based on selected flair template IDs.
 
-## What Artemis Does
+Artemis also maintains a moderator-only statistics wiki page at `r/<subreddit>/wiki/assistantbot_statistics`. The statistics page summarizes post activity, subscriber snapshots, top posts, flair usage, bot actions, and optional user flair distribution data.
 
-Artemis currently focuses on two core functions:
+Important operational notes:
 
-- **Artemis Main**: Enforces post flair rules by reminding submitters about unflaired posts and removing them until they select a flair. Includes flair enforcement, schedule rules, and NSFW/spoiler tagging.
-- **Artemis Stats**: Records subreddit statistics and updates `r/<subreddit>/wiki/assistantbot_statistics`.
+- For best results, also enable Reddit's built-in **Require post flair** post requirement. Artemis is a backup and enforcement layer for posts that still reach the subreddit without flair, which is possible on some clients.
+- Current configuration lives in the Devvit app installation settings page.
+- Older `assistantbot_config` wiki pages are read only as a compatibility fallback, though any saved Devvit settings will override matching configuration settings saved on the wiki.
+- Existing Python-era `assistantbot_statistics` pages are archived to `assistantbot_statistics_legacy` before Artemis writes the current Devvit statistics page for the first time. The legacy page will be linked to from the current page.
 
-Implemented Artemis Main features include:
+## Install And Deploy
 
-- Immediate checks for newly submitted posts when Reddit sends the post-submit trigger.
-- Optional subreddit menu check for up to 100 recent posts, using the same missing-flair enforcement flow as new submissions.
-- Reminder messages for submitters whose posts are submitted without flair.
-- Strict-mode removal of unflaired posts.
-- Automatic approval of previously removed unflaired posts after an allowed flair is selected, when configured.
-- Reconciliation of tracked posts in case Reddit misses a flair-update trigger.
-- Schedule-restricted post flairs, where selected flair template IDs are only allowed on configured days.
-- NSFW and spoiler tagging from configured flair template IDs.
-- Per-post operation history and action counters to make repeated trigger/scheduler runs idempotent.
+Install Artemis from this Devvit app page:
 
-Implemented Artemis Stats features include:
+```text
+https://developers.reddit.com/apps/assistantbot-rb
+```
 
-- Creation and update of the `assistantbot_statistics` wiki page.
-- Daily post and subscriber snapshots after midnight UTC.
-- Monthly top-post snapshots by score from Reddit's monthly `top` listing and by comments from stored Artemis snapshots.
-- Overall post activity by UTC time block and recent subscriber growth trends.
-- Post totals grouped by month, no-flair counts, removal counts, NSFW/spoiler counts, average score/comments, and top flairs.
-- User flair assignment snapshots with a top user-flair distribution table.
-- Recent subscriber snapshots with daily change values.
-- Bot-status/action-counter summaries.
-
-## Differences
-
-The Devvit version has a number of important differences from the previous Python bot. See [Deprecated Python behavior](docs/deprecated.md) for the old workflows and statistics sections that are not part of the Devvit port.
-
-## Documentation
-
-Additional documentation can be found in [docs](docs/index.md):
-
-- [FAQ](docs/faq.md) for moderator-facing setup and operations questions.
-- [Development notes](docs/development.md) for maintainer commands and source layout.
-- [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
-
-## Installing Artemis
-
-In the original bot, moderators invited a bot account. In the Devvit port, Artemis is installed as a Devvit app on each subreddit:
+Settings for the bot can then be configured at:
 
 ```text
 https://developers.reddit.com/r/<subreddit>/apps/assistantbot-rb
@@ -58,117 +31,112 @@ https://developers.reddit.com/r/<subreddit>/apps/assistantbot-rb
 
 After installation, Artemis will:
 
-- Create `r/<subreddit>/wiki/assistantbot_statistics`.
-- Send moderators a direct link when the statistics page is first successfully updated.
-- Warn moderators during onboarding if no public post flairs are available for users to select.
-- Send moderators a setup warning if Artemis cannot create or update the statistics wiki page.
-- Begin enforcing flair on new posts through Reddit triggers.
-- Refresh statistics through scheduled jobs after midnight UTC when enabled.
-
-For best results, subreddits should also enable Reddit's built-in "Require post flair" post requirement. Artemis is still useful as a backup because it can catch posts that pass through Reddit's native requirement checks or are affected by client/platform inconsistencies.
+- Send moderators an onboarding modmail notification.
+- Check for legacy configuration information from the previous Python version of the bot.
+- Begin checking new posts when Reddit sends post-submit triggers.
+- Listen for post flair updates so removed posts can be approved after receiving allowed flair, when configured.
+- Create or update `r/<subreddit>/wiki/assistantbot_statistics` when statistics updating is enabled.
+- Send moderators a direct link after the statistics page is first successfully updated.
+- Warn moderators if no public post flairs are available for users to select.
 
 ## Configuration
 
-Artemis is designed to work with minimal setup. Common per-subreddit settings live in the Devvit app installation settings page:
+Open the Devvit app installation settings page for the subreddit:
 
 ```text
 https://developers.reddit.com/r/<subreddit>/apps/assistantbot-rb
 ```
 
-The following fields are currently available on the Devvit installation settings page:
+Current settings:
 
-- **Enable Flair Enforcement** (`flair_enforcement_enabled`): whether Artemis should enforce missing post flair at all.
-- **Enable Statistics Updating** (`statistics_updating_enabled`): whether Artemis should run daily and monthly statistics updates, the manual statistics page refresh, and the manual user flair statistics refresh.
-- **Enable Userflair Gathering** (`userflair_gathering_enabled`): whether Artemis should gather user flair assignments during monthly statistics updates, manual statistics page refreshes, and manual user flair statistics refreshes. This only applies when statistics updating is enabled.
-- **Discord Webhook URL** (`discord_webhook_url`): Discord webhook URL for optional Artemis alerts. This per-subreddit installation setting is visible to moderators who can manage app settings.
-- **Send Discord Statistics Alerts** (`discord_alert_statistics_enabled`): whether Artemis should send a Discord alert after daily, monthly, or manual statistics updates finish. Requires a Discord webhook URL.
-- **Send Discord Flair Action Alerts** (`discord_alert_flair_actions_enabled`): whether Artemis should send a Discord alert after flair reminders, flair-rule removals, flaired-post approvals, or recent-post flair refreshes. Requires a Discord webhook URL.
-- **Remove Unflaired Posts** (`flair_enforce_remove_posts`): whether Artemis should remove posts that remain unflaired. This only applies when flair enforcement is enabled; when disabled, Artemis can still send reminder messages.
-- **Enforce Flair on Moderator Posts** (`flair_enforce_moderators`): whether moderators' own posts should receive flair enforcement.
-- **Approve Flaired Posts** (`flair_enforce_approve_posts`): whether Artemis should approve removed unflaired posts after they receive an allowed flair. This only applies when unflaired post removal is enabled; posts removed for a disallowed-day scheduled flair are not automatically restored after later flair changes.
+- **Enable Flair Enforcement** (`flair_enforcement_enabled`): turns flair enforcement on or off.
+- **Enable Statistics Updating** (`statistics_updating_enabled`): turns scheduled statistics updates, manual statistics page refreshes, and manual user flair statistics refreshes on or off. This is enabled by default.
+- **Enable Userflair Gathering** (`userflair_gathering_enabled`): gathers aggregate user flair assignment counts during monthly statistics updates and manual statistics refreshes. This only applies when statistics updating is enabled.
+- **Discord Webhook URL** (`discord_webhook_url`): Discord webhook URL for optional Artemis alerts. This per-subreddit setting is visible to moderators who can manage app settings.
+- **Send Discord Flair Action Alerts** (`discord_alert_flair_actions_enabled`): sends Discord alerts after flair reminders, flair-rule removals, flaired-post approvals, or recent-post flair refreshes. Requires a Discord webhook URL.
+- **Send Discord Statistics Alerts** (`discord_alert_statistics_enabled`): sends Discord alerts after daily, monthly, or manual statistics updates finish. Requires a Discord webhook URL.
+- **Remove Unflaired Posts** (`flair_enforce_remove_posts`): removes posts that remain unflaired. If disabled, Artemis can still send flair reminder messages.
+- **Enforce Flair on Moderator Posts** (`flair_enforce_moderators`): applies flair enforcement to posts made by subreddit moderators.
+- **Automatically Approve Flaired Posts** (`flair_enforce_approve_posts`): approves posts Artemis removed after they receive an allowed flair. This only applies when unflaired post removal is enabled. Posts removed for a disallowed-day scheduled flair are not automatically restored after later flair changes.
 - **Custom Flair Reminder Message** (`flair_enforce_custom_message`): custom text included in flair reminder messages.
 - **Custom Goodbye** (`custom_goodbye`): custom sign-off used in flair reminder messages.
-- **Flair Enforcement Username Whitelist** (`flair_enforce_whitelist`): users who should not receive flair enforcement.
-- **NSFW Flair Template IDs** (`flair_tag_nsfw`): post flair template IDs that should mark matching posts as NSFW.
-- **Spoiler Flair Template IDs** (`flair_tag_spoiler`): post flair template IDs that should mark matching posts as spoilers.
-- **Flair Schedule 1-5: Template IDs** (`flair_schedule_rule_1_ids` through `flair_schedule_rule_5_ids`): optional post flair template IDs for each schedule rule. Artemis allows up to five groups of flairs to only be allowed on certain days.
+- **Flair Enforcement Username Whitelist** (`flair_enforce_whitelist`): users who should not receive flair enforcement. Do not include `u/`.
+- **Auto-NSFW Flair Template IDs** (`flair_tag_nsfw`): post flair template IDs that should mark matching posts as NSFW.
+- **Auto-Spoiler Flair Template IDs** (`flair_tag_spoiler`): post flair template IDs that should mark matching posts as spoilers.
+- **Flair Schedule 1-5: Template IDs** (`flair_schedule_rule_1_ids` through `flair_schedule_rule_5_ids`): optional post flair template IDs for up to five schedule rules.
 - **Flair Schedule 1-5: Allowed Days** (`flair_schedule_rule_1_days` through `flair_schedule_rule_5_days`): days when each schedule rule's flair IDs are allowed.
 
-For settings that ask for post flair template IDs, moderators can find those IDs at `https://www.reddit.com/mod/<subreddit>/postflair/`. Hover over a flair you have created, then click **Copy ID**. A valid post flair template ID looks like `fb75eb7a-2dc3-11ef-9565-4ae35dc51fa1`; this is the ID format Artemis expects, not the flair display text.
+For settings that ask for post flair template IDs, use the subreddit post flair management page:
 
-Enable Statistics Updating is on by default in the Devvit installation settings. For existing subreddits moving from the Python bot, see [migrating to the Devvit version of AssistantBOT](#migrating-to-the-devvit-version-of-assistantbot) for legacy compatibility behavior.
+```text
+https://www.reddit.com/mod/<subreddit>/postflair/
+```
 
-## Migrating to the Devvit Version of AssistantBOT
+Use the flair template ID, not the display text. A valid template ID looks like:
 
-The old Python bot handled several concerns from one long-running process and a shared SQLite database. In Devvit, Artemis is installed per subreddit, stores installation-scoped state in Devvit Redis, and runs from Reddit triggers plus scheduled jobs.
+```text
+fb75eb7a-2dc3-11ef-9565-4ae35dc51fa1
+```
 
-Existing legacy config pages are still read as a compatibility fallback:
+## Interacting With Artemis
+
+Most Artemis work happens automatically:
+
+- New posts are checked when Reddit sends the post-submit trigger.
+- Flair changes are checked when Reddit sends the post-flair-update trigger.
+- Tracked removed or reminded posts are reconciled every 15 minutes in case Reddit misses a flair-update trigger.
+- Daily statistics run at 00:05 UTC when statistics updating is enabled.
+- Monthly statistics run at 00:30 UTC on the first day of the month when statistics updating is enabled.
+
+Moderators can also use these subreddit menu actions on mobile or desktop:
+
+- **[Artemis] Check Recent Posts for Missing Flair**: checks up to 100 recent posts using the same missing-flair enforcement flow as new submissions.
+- **[Artemis] Refresh Statistics Page**: records recent subreddit statistics and updates `r/<subreddit>/wiki/assistantbot_statistics`.
+- **[Artemis] Refresh User Flair Statistics**: gathers current aggregate user flair assignments and updates the statistics wiki page.
+
+Submitters interact with Artemis by choosing post flair through Reddit's normal post flair interface. The old Python bot's private-message flair reply workflow is not supported in this Devvit app.
+
+## Migration Notes
+
+Existing subreddits with this legacy config page can keep working while they move settings into Devvit:
 
 ```text
 r/<subreddit>/wiki/assistantbot_config
 ```
 
-Existing subreddits with this wiki page can keep working without manually copying every value immediately. When an installation setting has not been saved, Artemis reads the wiki page at runtime, then falls back to the built-in default. Any saved Devvit installation setting overrides the matching wiki value. This is compatibility behavior only: the wiki values are not copied into the native Devvit settings UI, so moderators are strongly encouraged to update and save the native installation settings when they can.
+If there are no Devvit settings, Artemis will read the matching settings on the config page and then falls back to the built-in default. Saved Devvit settings override matching wiki values. The wiki values are not copied into the native Devvit settings UI, so moderators should review and save the Devvit settings page when they can.
 
-The wiki page may still contain the install-setting fields listed above, plus the older YAML `flair_tags` and `flair_schedule` mappings. New installs and active configuration changes should use the Devvit installation settings page instead. Deprecated Python-era configuration workflows are listed in [Deprecated Python behavior](docs/deprecated.md#main-flair-enforcement).
+If `r/<subreddit>/wiki/assistantbot_statistics` already contains Python-era statistics, Artemis archives it unchanged to `r/<subreddit>/wiki/assistantbot_statistics_legacy` before the first Devvit statistics write. Future scheduled jobs will update only the current Devvit statistics page.
 
-Existing `assistantbot_statistics` pages can contain years of Python-era history. The Devvit updater does not silently overwrite that history on first run. The migration behavior for existing subreddits is:
-
-- Read the current `r/<subreddit>/wiki/assistantbot_statistics` page before the first Devvit statistics write.
-- If the page exists and does not look like a Devvit-generated page, copy it unchanged to `r/<subreddit>/wiki/assistantbot_statistics_legacy`.
-- Replace `assistantbot_statistics` with the current Devvit summary only after the legacy archive has been created.
-- Link from the current Devvit page to the legacy archive so moderators can find the preserved Python-era statistics.
-- Treat the legacy archive as read-only after creation; future scheduled jobs should update only the Devvit current page.
-
-Portable from the Python stats runtime:
-
-- Subscriber snapshots from the Reddit API.
-- Post/flair counts from post events and recent listing scans.
-- User flair assignment counts from Reddit's user flair listing API.
-- Top post summaries using Reddit listing APIs.
-- Statistics wiki page creation, hidden/mod-only page settings, and periodic wiki updates.
-- Artemis action counters already collected by the Devvit moderation flow.
+Please see [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
 
 ## Fetch Domains
 
-The following domain is requested for this app:
+The following domain is requested for this app, and is already present on the Devvit [global fetch allowlist](https://developers.reddit.com/docs/capabilities/http-fetch#global-fetch-allowlist):
 
-- `discord.com` - Used to send optional, moderator-configured Discord webhook alerts for completed statistics updates, recent-post flair refreshes, and flair actions.
+- `discord.com` - Used to send optional, moderator-configured Discord webhook alerts for bot actions.
 
-If moderators configure a Discord webhook URL and enable Discord alerts, Artemis sends the alert content to Discord so it can be displayed in the moderators' Discord server. Depending on the alert type, that content can include the subreddit name, post title, post permalink, post author username, action summary, statistics page link, counts, and timestamps.
+If moderators configure a Discord webhook URL and enable Discord alerts, Artemis sends the alert content to Discord so it can be displayed in the moderators' Discord server.
 
 ## Data
 
-Artemis stores Devvit-era subreddit state in Devvit Redis for the app installation. The port does not use the old shared SQLite databases as runtime dependencies.
+Artemis stores Devvit-era subreddit state in Devvit Redis for the app installation.
 
-The app records:
+Stored data includes tracked unflaired posts, whether Artemis removed a tracked post, per-post operation history, action counters, compact post snapshots for statistics, subscriber snapshots, aggregate user flair assignment counts when enabled, and monthly top-post snapshots.
 
-- Tracked unflaired posts and whether Artemis removed them.
-- Per-post operation history used for idempotency.
-- Action counters.
-- Post snapshots from submit/flair-update triggers and recent-listing recovery scans.
-- Subscriber snapshots.
-- Aggregated user flair assignment counts, when userflair gathering is enabled.
-- Monthly top-post snapshots.
+Most recorded data comes from Reddit API objects already visible to moderators or publicly visible on Reddit. Removing and uninstalling the app from a subreddit immediately stops future trigger and scheduler processing for that installation.
 
-Most recorded data comes from Reddit API objects that are already visible to moderators or publicly visible on Reddit. Traffic data is not collected in this port because Devvit does not expose an equivalent subreddit traffic endpoint.
+## Documentation
 
-Removing and uninstalling the app from a subreddit immediately stops future trigger and scheduler processing for that installation.
+Additional documentation can be found in [docs](docs/index.md):
 
-## Statistics Updating
-
-The Devvit statistics component is installation-scoped and event-driven:
-
-- `onPostSubmit` and `onPostFlairUpdate` write compact post snapshots to Redis.
-- `artemis-record-daily-stats` samples recent posts, records the current subscriber count, and updates `r/<subreddit>/wiki/assistantbot_statistics` when statistics updating is enabled.
-- `artemis-record-monthly-stats` records monthly top-post summaries by score from Reddit's listing API, archives top-commented posts from stored Artemis snapshots for the same month, optionally records aggregate user flair assignment counts, and updates the same wiki page when statistics updating is enabled.
-- The **[Artemis] Refresh User Flair Statistics** subreddit menu action records aggregate user flair assignment counts and updates the same wiki page without waiting for the monthly statistics job.
-- Optional Discord statistics alerts are sent only after the statistics wiki update finishes.
-- The stats page keeps Devvit-supported sections for overall activity, bot status, posts, and subscribers.
+- [FAQ](docs/faq.md) for moderator-facing setup and operations questions.
+- [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
+- [Version History](docs/version_history.md) for the full historical changelog.
 
 ## Changelog
 
-This is an abbreviated changelog for Reddit app review. See [Version History](docs/version_history.md) for the full history.
+This is an abbreviated changelog for Reddit app review.
 
-- **Devvit v1.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
-- **Legacy Python releases**: Earlier Python-bot releases are retained in the full version history for historical context, but many older workflows are not part of this Devvit port.
+- **0.9.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
+- **Legacy Python releases**: Earlier Python-bot releases are retained in [Version History](docs/version_history.md) for historical context, but many older workflows are not part of this Devvit port.

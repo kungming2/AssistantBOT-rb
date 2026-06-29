@@ -63,6 +63,17 @@ After creating flairs, make sure users are allowed to assign post flair when sub
 `;
 }
 
+export function msgModInstallLegacyConfigDetected(subredditName: string): string {
+  const s = subredditName;
+  return `
+---
+
+**Legacy configuration detected:** Artemis found r/${s}'s existing **[assistantbot_config wiki page](https://www.reddit.com/r/${s}/wiki/assistantbot_config)** and has applied those fallback settings for this Devvit installation.
+
+Those settings should continue to work. Because Devvit does not allow Artemis to copy values into the app installation settings page automatically, please review the [Devvit app installation settings page](https://developers.reddit.com/r/${s}/apps/assistantbot-rb) and re-save the current settings there when you can.
+`;
+}
+
 /**
  * One-time message sent to moderators when the statistics wiki page
  * is first set up.
@@ -74,10 +85,9 @@ export function msgModStatisticsFirst(subredditName: string): string {
   return `
 Hey there moderators of r/${s}!
 
-I wanted to give you a heads-up that your community statistics have just been posted at \
-**[this wiki page](https://www.reddit.com/r/${s}/wiki/assistantbot_statistics)**. There's also a \
-handy [guide here](https://www.reddit.com/r/AssistantBOT/wiki/guide) that explains each section \
-of the page.
+Here's a heads-up that your community statistics have just been saved to \
+**[this wiki page](https://www.reddit.com/r/${s}/wiki/assistantbot_statistics)**.
+
 
 Please note that this is a *one-time message* to inform you that the statistics wiki page has \
 been set up. \
@@ -86,10 +96,15 @@ This wiki page is by default only visible to moderators and is *not* listed on t
 [general list of wiki pages](https://www.reddit.com/r/${s}/wiki/pages/), though you may choose \
 to make it public if you wish.
 
+
 Have a good day!
 `;
 }
 
+/**
+ * Unlikely to encounter this now that Devvit apps by default have all
+ * moderator permissions, but included in case.
+ */
 export function msgModStatsWikiSetupProblem(subredditName: string): string {
   const s = subredditName;
   return `
@@ -290,8 +305,8 @@ export function msgScheduleRemoval(params: {
 Hey there u/${username},
 
 Thanks for submitting [your post](${postPermalink}) to r/${s}! This community asks \
-that posts flaired as **${flairName}** only be submitted on the following \
-days:
+that posts with the **${flairName}** flair only be submitted on the following \
+days of the week:
 
 * **${permittedDays}**
 
@@ -328,31 +343,26 @@ subreddit has at least ${minSubscribers} subscribers.*
  *   {3} subscribers section
  *   {4} overall section
  *   {5} Artemis version number
- *   {6} compile time in seconds
- *   {7} last-updated timestamp (UTC)
- *   {8} announcement / extra section (or empty string)
- *   {9} navigation prefix section (or empty string)
+ *   {6} last-updated timestamp (UTC)
+ *   {7} announcement / extra section (or empty string)
+ *   {8} navigation prefix section (or empty string)
  */
 export function wikipageTemplate(params: {
-  subredditName: string;
   overallSection: string;
   botStatusSection: string;
   postsSection: string;
   subscribersSection: string;
   versionNumber: string;
-  compileSeconds: number | string;
   updatedAtUtc: string;
   announcementSection: string;
   navigationPrefix: string;
 }): string {
   const {
-    subredditName: s,
     overallSection,
     botStatusSection,
     postsSection,
     subscribersSection,
     versionNumber,
-    compileSeconds,
     updatedAtUtc,
     announcementSection,
     navigationPrefix,
@@ -362,18 +372,13 @@ export function wikipageTemplate(params: {
 
 # Statistics by Artemis (u/AssistantBOT)
 
-${navigationPrefix}[🏹 Info](https://www.reddit.com/r/AssistantBOT/) • \
-[❓ FAQ](https://www.reddit.com/r/AssistantBOT/wiki/faq) • \
-[🔎️ Guide](https://www.reddit.com/r/AssistantBOT/wiki/guide) • \
-[📓 Change Log](https://www.reddit.com/r/AssistantBOT/wiki/changelog) • \
-[📒 Mod Log](https://www.reddit.com/r/${s}/about/log/?mod=AssistantBOT) • \
-[🏹 Bot Info/Support](https://www.reddit.com/r/AssistantBOT/)
+${navigationPrefix}[🏹 Info](https://www.reddit.com/r/AssistantBOT/)
 
 ${announcementSection}
 
 ---
 
-*Compiled by Artemis v${versionNumber} in ${compileSeconds} seconds and updated on ${updatedAtUtc} UTC.*
+*Compiled by Artemis v${versionNumber} and last updated on ${updatedAtUtc} UTC.*
 
 ---
 
@@ -394,13 +399,6 @@ ${postsSection}
 ${subscribersSection}
 `;
 }
-
-/** Error notice shown when Pushshift data is unavailable for a query. */
-export const WIKIPAGE_PS_ERROR = `
-* Data cannot be accessed for this timeframe and query \
-due to Pushshift aggregations being disabled \
-(see [here](https://redd.it/jm8yyt) on r/Pushshift).
-`;
 
 /**
  * A list of goodbye phrases. Artemis chooses a random one when
@@ -591,20 +589,5 @@ it processes a relevant trigger or scheduled job.
 ---
 
 ${errorMessage}
-`;
-}
-
-/**
- * Historical message for the deprecated legacy advanced configuration revert
- * workflow.
- *
- * @param subredditName The subreddit's name (no `r/` prefix).
- */
-export function configRevert(subredditName: string): string {
-  return `
-🧹 The old modmail revert workflow is deprecated in this Devvit port. Use the Devvit app installation \
-settings page for current Artemis controls. The **[assistantbot_config wiki page]\
-(https://www.reddit.com/r/${subredditName}/wiki/assistantbot_config)** is read only as a legacy fallback \
-when matching installation settings have not been saved.
 `;
 }

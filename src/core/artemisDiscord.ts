@@ -1,6 +1,10 @@
 import type { ArtemisSubredditConfig } from './artemisTypes';
 
 const DISCORD_WEBHOOK_HOST = 'discord.com';
+const DISCORD_EMBED_COLOR_MAIN_AUTOMATIC = 0x2874a6;
+const DISCORD_EMBED_COLOR_MAIN_MANUAL = 0x5dade2;
+const DISCORD_EMBED_COLOR_STATS_AUTOMATIC = 0xd35400;
+const DISCORD_EMBED_COLOR_STATS_MANUAL = 0xf5b041;
 
 type DiscordEmbed = {
   title: string;
@@ -125,9 +129,12 @@ export async function sendDiscordStatisticsAlert(
     embeds: [
       {
         title,
-        description: `Artemis finished updating statistics for r/${subredditName}.`,
+        description: `Artemis completed updating the [statistic page](https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics) for r/${subredditName}.`,
         url: `https://www.reddit.com/r/${subredditName}/wiki/assistantbot_statistics`,
-        color: 0x3498db,
+        color:
+          alertType === 'manual'
+            ? DISCORD_EMBED_COLOR_STATS_MANUAL
+            : DISCORD_EMBED_COLOR_STATS_AUTOMATIC,
         timestamp: new Date().toISOString(),
       },
     ],
@@ -149,7 +156,7 @@ export async function sendDiscordFlairActionAlert(
         title: alert.action,
         description: truncate(`[${alert.postTitle}](${alert.postPermalink})`, 4096),
         url: alert.postPermalink,
-        color: 0xe67e22,
+        color: DISCORD_EMBED_COLOR_MAIN_AUTOMATIC,
         fields: [
           { name: 'Subreddit', value: `r/${alert.subredditName}`, inline: true },
           { name: 'Author', value: `u/${alert.authorName}`, inline: true },
@@ -175,7 +182,7 @@ export async function sendDiscordRecentPostRefreshAlert(
         title: 'Recent post flair refresh completed',
         description: `Artemis checked recent posts for missing flair in r/${alert.subredditName}.`,
         url: `https://www.reddit.com/r/${alert.subredditName}/new/`,
-        color: 0xe67e22,
+        color: DISCORD_EMBED_COLOR_MAIN_MANUAL,
         fields: [
           { name: 'Checked', value: String(alert.checked), inline: true },
           { name: 'Missing flair', value: String(alert.unflaired), inline: true },

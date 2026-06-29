@@ -1,6 +1,6 @@
 # Version History
 
-[<- Back to Home](./index.md) • [🕯️ Deprecated](./deprecated.md) • [🛠️ Development](./development.md) • [❓ FAQ](./faq.md) • [🔎️ Guide](./guide.md) • [📓 Version History](./version_history.md)
+[<- Back to Home](./index.md) • [🕯️ Deprecated](./deprecated.md) • [❓ FAQ](./faq.md) • [📓 Version History](./version_history.md)
 
 *This wiki page serves as a non-exhaustive list of changes and tweaks made to improve the operations of Artemis (u/AssistantBOT).*
 
@@ -23,7 +23,7 @@
 | Katsura      | 2.1         | 2021-01-08 |
 | Laurel       | 2.2         | 2021-04-22 |
 | Maple        | 2.3         | 2021-06-22 |
-| Neem         | Devvit 1.0  | 2026-07-01 |
+| **Neem**         | Devvit 1.0  | 2026-07-01 |
 
 ## Change Log
 
@@ -38,22 +38,18 @@
 ### Devvit v1.0 [Neem](https://en.wikipedia.org/wiki/Azadirachta_indica) (Current, 2026-07-01)
 
 * 🆕 **Feature**: Artemis has been rebuilt as a Devvit app that moderators install directly on each subreddit, rather than as a single externally hosted Python bot account.
-* 🆕 **Feature**: Flair enforcement is now handled by Reddit triggers. New submissions are checked as soon as the post-submit trigger is received, and flair changes can approve previously removed unflaired posts when configured.
-* 🆕 **Feature**: The statistics routine has been ported to Devvit, with subreddit-local post snapshots, subscriber snapshots, aggregate userflair counts, and action counters updating `assistantbot_statistics`.
 * ➕ **Addition**: Added Devvit installation settings for current Artemis controls, including flair enforcement, statistics updating, userflair gathering, NSFW/spoiler tagging, weekday flair schedules, and optional Discord alerts.
 * ➕ **Addition**: Added moderator-only menu items to check up to 100 recent posts for missing flair, manually refresh the statistics wiki page, and manually refresh user flair statistics.
 * ➕ **Addition**: Added optional Discord webhook alerts for completed statistics updates, recent-post flair refreshes, and flair actions.
-* ➕ **Addition**: Added one-time modmail notifications for the first successful statistics page update, missing public post flairs during onboarding, and statistics wiki setup failures.
 * ➕ **Addition**: Existing Python-era `assistantbot_statistics` pages are archived to `assistantbot_statistics_legacy` before the first Devvit statistics write.
+* 🔧 **Change**: Flair enforcement is now handled by Reddit triggers. New submissions are checked as soon as the post-submit trigger is received, and flair changes can approve previously removed unflaired posts when configured.
+* 🔧 **Change**: The statistics routine has been ported to Devvit, with subreddit-local post snapshots, subscriber snapshots, aggregate userflair counts, and action counters updating `assistantbot_statistics`.
 * 🔧 **Change**: Artemis now stores runtime state in per-installation Devvit Redis instead of the old shared SQLite databases.
 * 🔧 **Change**: Existing `assistantbot_config` wiki pages are read as compatibility fallbacks, but saved Devvit installation settings are now the active configuration surface.
 * 🔧 **Change**: Missing-flair enforcement now has a bounded recent-post refresh path and a periodic reconciliation job for posts that were already tracked.
-* 🕯️ **Removed**: Installing Artemis by inviting a bot account is no longer supported; communities install the Devvit app instead.
-* 🕯️ **Removed**: Legacy moderator private-message commands such as `enable`, `disable`, `example`, `update`, `revert`, `takeout`, and `query` are not part of this port.
-* 🕯️ **Removed**: The old `Default+` and `Strict+` private-message reply modes have been removed. Submitters now choose flair through Reddit's post flair interface.
-* 🕯️ **Removed**: The old five-minute grace-period check for new posts has been replaced by immediate post-submit trigger handling.
-* 🕯️ **Removed**: Pushshift, RedditMetrics, traffic tables, cross-subreddit dashboards, hosted takeout exports, and query reports are not part of the Devvit statistics port.
-* 🕯️ **Removed**: OC flair tagging and the active use of `flair_enforce_alert_list` are not part of the current Devvit handlers.
+* 🕯️ **Removed**: Pushshift, RedditMetrics, traffic tables, cross-subreddit dashboards, hosted takeout exports, and query reports are not part of the Devvit statistics port. Most of these sites had become obsolete in previous years and the bot had to stop using them previously.
+* 🕯️ **Removed**: OC flair tagging has been [deprecated](https://www.reddit.com/r/modnews/comments/1am4b0e/deprecating_post_collections_mark_as_oc_and/) by Reddit and is thus no longer supported.
+
 
 *Historical note: The entries below describe the legacy Python version of Artemis. They are retained for historical context and may not apply to the current Devvit app.*
 

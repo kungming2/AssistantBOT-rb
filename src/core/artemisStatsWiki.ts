@@ -332,7 +332,6 @@ export async function updateStatsWikiPage(
   subredditName: string
 ): Promise<void> {
   try {
-    const compileStart = Date.now();
     const statsPage = await ensureStatsWikiPage(subredditName);
     const legacyArchive = await ensureLegacyStatsArchive(
       subredditName,
@@ -348,13 +347,11 @@ export async function updateStatsWikiPage(
       ]);
 
     const content = wikipageTemplate({
-      subredditName,
       overallSection,
       botStatusSection,
       postsSection,
       subscribersSection,
       versionNumber: ARTEMIS_STATS_VERSION,
-      compileSeconds: ((Date.now() - compileStart) / 1000).toFixed(2),
       updatedAtUtc: timeConvertToString(nowSeconds()),
       announcementSection: buildAnnouncementSection(subredditName, legacyArchive),
       navigationPrefix: '',

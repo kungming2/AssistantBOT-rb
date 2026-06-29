@@ -7,7 +7,11 @@ import type {
   TriggerResponse,
 } from '@devvit/web/shared';
 import { handlePostFlairUpdated, handlePostSubmitted } from '../core/artemisPosts';
-import { loadSubredditConfig } from '../core/artemisConfig';
+import {
+  loadSubredditConfig,
+  loadSubredditConfigWithSource,
+  type ArtemisSubredditConfigLoadResult,
+} from '../core/artemisConfig';
 import {
   initializeSubredditState,
   isFlairEnforcementEnabled,
@@ -17,6 +21,7 @@ import { initializeStatsWikiPage } from '../core/artemisStatsWiki';
 import { getPublicPostFlairs } from '../core/artemisFlair';
 import { sendModeratorNotification } from '../core/artemisModmail';
 import {
+  msgModInstallLegacyConfigDetected,
   msgModInstallNoPublicFlairsWarning,
   msgModInstallOnboarding,
 } from '../core/text';
@@ -26,9 +31,10 @@ export const triggers = new Hono();
 
 async function initializeSubredditInstall(
   subredditName: string
-): Promise<void> {
+): Promise<ArtemisSubredditConfigLoadResult> {
   await initializeSubredditState(subredditName);
-  const config = await loadSubredditConfig(subredditName);
+  const configResult = await loadSubredditConfigWithSource(subredditName);
+  const { config } = configResult;
   if (config.statistics_updating_enabled) {
     try {
       await initializeStatsWikiPage(subredditName);
@@ -36,6 +42,7 @@ async function initializeSubredditInstall(
       console.warn(`Artemis Install: statistics wiki setup failed for r/${subredditName}.`, err);
     }
   }
+  return configResult;
 }
 
 async function loadTriggerConfig(
@@ -46,9 +53,14 @@ async function loadTriggerConfig(
 
 async function sendInstallOnboardingNotification(
   subredditName: string,
-  subredditId: string
+  subredditId: string,
+  legacyConfigApplied: boolean
 ): Promise<void> {
   let bodyMarkdown = msgModInstallOnboarding(subredditName);
+
+  if (legacyConfigApplied) {
+    bodyMarkdown += msgModInstallLegacyConfigDetected(subredditName);
+  }
 
   if (await isFlairEnforcementEnabled(subredditName)) {
     try {
@@ -74,9 +86,13 @@ triggers.post('/on-app-install', async (c) => {
   const input = await c.req.json<OnAppInstallRequest>();
   console.log('App installed to subreddit: r/' + input.subreddit?.name);
   if (input.subreddit?.name) {
-    await initializeSubredditInstall(input.subreddit.name);
+    const configResult = await initializeSubredditInstall(input.subreddit.name);
     if (input.subreddit.id) {
-      await sendInstallOnboardingNotification(input.subreddit.name, input.subreddit.id);
+      await sendInstallOnboardingNotification(
+        input.subreddit.name,
+        input.subreddit.id,
+        configResult.legacyConfigApplied
+      );
     }
   }
 
