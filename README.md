@@ -141,6 +141,8 @@ Most recorded data comes from Reddit API objects already visible to moderators o
 Additional documentation can be found in [docs](docs/index.md):
 
 - [FAQ](docs/faq.md) for moderator-facing setup and operations questions.
+- [Privacy Policy](docs/privacy.md) for data collection, storage, sharing, and retention details.
+- [Terms And Conditions](docs/terms.md) for app usage terms.
 - [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
 - [Version History](docs/version_history.md) for the full historical changelog.
 
@@ -152,5 +154,5 @@ AssistantBOT Reborn is licensed under the [MIT License](LICENSE).
 
 This is an abbreviated changelog for Reddit app review.
 
-- **0.9.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
+- **1.0.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
 - **Legacy Python releases**: Earlier Python-bot releases are retained in [Version History](docs/version_history.md) for historical context, but many older workflows are not part of this Devvit port.
