@@ -23,7 +23,7 @@
     "@hono/node-server": "^2.0.3",
     "devvit": "^0.13.4",
     "hono": "4.12.21",
-    "js-yaml": "4.1.1"
+    "js-yaml": "5.2.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
