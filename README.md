@@ -95,7 +95,8 @@ Most Artemis work happens automatically:
 - New posts are checked when Reddit sends the post-submit trigger.
 - Flair changes are checked when Reddit sends the post-flair-update trigger.
 - Tracked removed or reminded posts are reconciled every 15 minutes in case Reddit misses a flair-update trigger.
-- Daily statistics run at 00:05 UTC when statistics updating is enabled.
+- Recent post snapshots refresh hourly at :05 UTC when statistics updating is enabled.
+- Daily subscriber statistics and the statistics wiki page update run at 00:05 UTC when statistics updating is enabled.
 - Monthly statistics run at 00:30 UTC on the first day of the month when statistics updating is enabled.
 
 Moderators can also use these subreddit menu actions on mobile or desktop:
@@ -141,8 +142,6 @@ Most recorded data comes from Reddit API objects already visible to moderators o
 Additional documentation can be found in [docs](docs/index.md):
 
 - [FAQ](docs/faq.md) for moderator-facing setup and operations questions.
-- [Privacy Policy](docs/privacy.md) for data collection, storage, sharing, and retention details.
-- [Terms And Conditions](docs/terms.md) for app usage terms.
 - [Deprecated Python behavior](docs/deprecated.md) for old workflows and statistics sections that are not part of the Devvit port.
 - [Version History](docs/version_history.md) for the full historical changelog.
 
@@ -152,7 +151,8 @@ AssistantBOT Reborn is licensed under the [MIT License](LICENSE).
 
 ## Changelog
 
-This is an abbreviated changelog for Reddit app review.
+This is an abbreviated changelog for Reddit app review and to see changes at a glance.
 
+- **1.0.2**: Refined statistics collection and display, including hourly recent-post snapshots, grouped emoji-style user flair statistics, and clearer `None` formatting for missing post flair.
 - **1.0.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
 - **Legacy Python releases**: Earlier Python-bot releases are retained in [Version History](docs/version_history.md) for historical context, but many older workflows are not part of this Devvit port.

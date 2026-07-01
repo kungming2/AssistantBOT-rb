@@ -7,6 +7,7 @@ import { reconcileFilteredPosts } from '../core/artemisPosts';
 import {
   recordDailyStatsForInstalledSubreddits,
   recordMonthlyStatsForInstalledSubreddits,
+  recordRecentPostStatsForInstalledSubreddits,
 } from '../core/artemisStatsRecorder';
 import { updateStatsWikiPages } from '../core/artemisStatsWiki';
 
@@ -22,6 +23,18 @@ schedulerRoutes.post('/artemis-reconcile-filtered-posts', async (c) => {
   }
 
   await reconcileFilteredPosts();
+  return c.json<TaskResponse>(TASK_OK, 200);
+});
+
+schedulerRoutes.post('/artemis-record-recent-posts', async (c) => {
+  const input = await c.req.json<TaskRequest>();
+
+  if (input.name !== ARTEMIS_JOBS.recordRecentPosts) {
+    console.warn(`Unknown scheduled task: ${input.name}`);
+    return c.json<TaskResponse>(TASK_OK, 200);
+  }
+
+  await recordRecentPostStatsForInstalledSubreddits();
   return c.json<TaskResponse>(TASK_OK, 200);
 });
 

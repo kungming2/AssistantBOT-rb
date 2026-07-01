@@ -42,7 +42,6 @@ Here's what Artemis can do:
 
 **Please take some time to check out the [Devvit app installation settings page](https://developers.reddit.com/r/${s}/apps/assistantbot-rb) and configure the bot to your heart's content.** For best results, also enable Reddit's built-in "Require post flair" [setting](https://www.reddit.com/mod/${s}/posts-and-comments) for this subreddit.
 
----
 
 Thanks for using the bot! If you'd like support and project updates, please visit r/AssistantBOT.
 `;

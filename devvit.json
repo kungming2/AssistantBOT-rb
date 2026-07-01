@@ -20,6 +20,10 @@
         "endpoint": "/internal/scheduler/artemis-reconcile-filtered-posts",
         "cron": "*/15 * * * *"
       },
+      "artemis-record-recent-posts": {
+        "endpoint": "/internal/scheduler/artemis-record-recent-posts",
+        "cron": "5 * * * *"
+      },
       "artemis-record-daily-stats": {
         "endpoint": "/internal/scheduler/artemis-record-daily-stats",
         "cron": "5 0 * * *"

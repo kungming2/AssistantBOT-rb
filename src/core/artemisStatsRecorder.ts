@@ -283,6 +283,11 @@ async function collectSubredditUserFlairAggregates(
 }
 
 function userFlairLabel(flairText: string, flairCssClass: string): string {
+  const emojiLabel = userFlairEmojiLabel(flairText);
+  if (emojiLabel) {
+    return emojiLabel;
+  }
+
   if (flairText) {
     return flairText;
   }
@@ -290,6 +295,15 @@ function userFlairLabel(flairText: string, flairCssClass: string): string {
     return `(CSS class: ${flairCssClass})`;
   }
   return '(blank flair text)';
+}
+
+function userFlairEmojiLabel(flairText: string): string {
+  const emojiRefs = flairText.match(/:[A-Za-z0-9_-]+:/g);
+  if (!emojiRefs?.length) {
+    return '';
+  }
+
+  return emojiRefs.join('');
 }
 
 function userFlairGatheringSummaryFromResult(
@@ -346,6 +360,27 @@ export async function recordSubredditDailyStats(
   }
   await recordStatsRun(ARTEMIS_JOBS.recordDailyStats, nowSeconds());
   return true;
+}
+
+export async function recordSubredditRecentPostStats(subredditName: string): Promise<boolean> {
+  const config = await loadSubredditConfig(subredditName);
+  if (!config.statistics_updating_enabled) {
+    return false;
+  }
+
+  await recordRecentPostSnapshots(subredditName);
+  return true;
+}
+
+export async function recordRecentPostStatsForInstalledSubreddits(): Promise<string[]> {
+  const subredditNames = await getInstalledSubredditNames();
+  const updatedSubredditNames: string[] = [];
+  for (const subredditName of subredditNames) {
+    if (await recordSubredditRecentPostStats(subredditName)) {
+      updatedSubredditNames.push(subredditName);
+    }
+  }
+  return updatedSubredditNames;
 }
 
 export async function recordDailyStatsForInstalledSubreddits(): Promise<string[]> {

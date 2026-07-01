@@ -93,6 +93,10 @@ function markdownEscape(value: string): string {
   return value.replace(/([\\`*_{}[\]()#+\-.!|>])/g, '\\$1');
 }
 
+function formatPostFlairLabel(flair: string): string {
+  return flair === 'None' ? '`None`' : markdownEscape(flair);
+}
+
 function increment(map: Map<string, number>, key: string): void {
   map.set(key, (map.get(key) ?? 0) + 1);
 }
@@ -120,7 +124,7 @@ function topFlairs(flairCounts: Map<string, number>): string {
   const flairs = [...flairCounts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 3)
-    .map(([flair, count]) => `${markdownEscape(flair)} (${formatNumber(count)})`);
+    .map(([flair, count]) => `${formatPostFlairLabel(flair)} (${formatNumber(count)})`);
 
   return flairs.length ? flairs.join(', ') : 'None';
 }
@@ -256,7 +260,7 @@ function formatFlairTable(stats: MonthlyPostStats): string {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(
       ([flair, count]) =>
-        `| ${markdownEscape(flair)} | ${formatNumber(count)} | ${formatPercentage(
+        `| ${formatPostFlairLabel(flair)} | ${formatNumber(count)} | ${formatPercentage(
           count,
           stats.total
         )} |`
@@ -536,6 +540,9 @@ function formatUserFlairDistributionTable(aggregates: UserFlairAggregate[]): str
   }
 
   const total = aggregates.reduce((sum, aggregate) => sum + aggregate.count, 0);
+  const hasEmojiLabels = aggregates.some((aggregate) => isEmojiFlairLabel(aggregate.flairLabel));
+  const labelHeader = hasEmojiLabels ? 'User Flair Emoji' : 'User Flair';
+  const totalLabel = hasEmojiLabels ? 'Total listed emoji flairs' : 'Total listed user flairs';
 
   const rows = aggregates
     .sort((a, b) => b.count - a.count || a.flairLabel.localeCompare(b.flairLabel))
@@ -548,11 +555,15 @@ function formatUserFlairDistributionTable(aggregates: UserFlairAggregate[]): str
     );
 
   return [
-    '| User Flair | Users | Percentage |',
+    `| ${labelHeader} | Users | Percentage |`,
     '|------------|------:|-----------:|',
     ...rows,
-    `| **Total listed user flairs** | ${formatNumber(total)} | 100% |`,
+    `| **${totalLabel}** | ${formatNumber(total)} | 100% |`,
   ].join('\n');
+}
+
+function isEmojiFlairLabel(flairLabel: string): boolean {
+  return /:[A-Za-z0-9_-]+:/.test(flairLabel);
 }
 
 export async function collateOverallSection(): Promise<string> {

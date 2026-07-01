@@ -29,6 +29,7 @@ export const ARTEMIS_SETTINGS = {
 
 export const ARTEMIS_JOBS = {
   reconcileFilteredPosts: 'artemis-reconcile-filtered-posts',
+  recordRecentPosts: 'artemis-record-recent-posts',
   recordDailyStats: 'artemis-record-daily-stats',
   recordMonthlyStats: 'artemis-record-monthly-stats',
 } as const;

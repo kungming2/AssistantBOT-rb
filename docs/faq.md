@@ -44,7 +44,7 @@ Implemented statistics features:
 - Creates and updates `r/<subreddit>/wiki/assistantbot_statistics`.
 - Keeps the statistics wiki page unlisted and moderator-only when wiki settings can be updated.
 - Records compact post snapshots from post-submit and flair-update triggers.
-- Refreshes recent post snapshots during the daily statistics job.
+- Refreshes up to 100 recent post snapshots hourly.
 - Records daily subscriber snapshots.
 - Records monthly top-post snapshots by score from Reddit's monthly top listing and by comments from stored Artemis snapshots.
 - Shows overall post activity, subscriber growth trends, bot status, action counters, post totals, no-flair counts, removal counts, NSFW/spoiler counts, average score/comments, top flairs, subscriber snapshots, and top posts by score/comments.
@@ -131,6 +131,7 @@ Artemis updates statistics through scheduled Devvit jobs when **Enable Statistic
 
 | Job                                | Schedule                                           |
 |------------------------------------|----------------------------------------------------|
+| `artemis-record-recent-posts`      | Hourly at :05 UTC                                  |
 | `artemis-record-daily-stats`       | Daily at 00:05 UTC                                 |
 | `artemis-record-monthly-stats`     | Monthly at 00:30 UTC on the first day of the month |
 

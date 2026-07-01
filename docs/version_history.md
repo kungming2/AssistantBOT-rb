@@ -35,7 +35,13 @@
 | 🐞 **Bug Fix**  | Bug fixes for issues.                                                                              |
 | 🕯️ **Removed** | Features or code handling that was removed.                                                        |
 
-### Devvit v1.0 [Neem](https://en.wikipedia.org/wiki/Azadirachta_indica) (Current, 2026-07-01)
+### Devvit v1.0.2 (Current, 2026-07-01)
+
+* 🔧 **Change**: User flair statistics now group flair text by Reddit emoji references when emoji tags are present. For example, `:edu-ma: M.A.` and `:edu-ma: Ph.D Candidate` are counted together under `:edu-ma:`, while subreddits without emoji-style flair text continue using the previous full user flair text table.
+* 🔧 **Change**: Recent post snapshots for statistics now refresh hourly, reducing missed posts on higher-volume subreddits while keeping the statistics wiki rewrite on the daily schedule.
+* 🐞 **Bug Fix**: Monthly statistics tables now render missing post flair as `None` in code formatting, making it easier to distinguish from a real flair named None.
+
+### Devvit v1.0 [Neem](https://en.wikipedia.org/wiki/Azadirachta_indica) (2026-07-01)
 
 * 🆕 **Feature**: Artemis has been rebuilt as a Devvit app that moderators install directly on each subreddit, rather than as a single externally hosted Python bot account.
 * ➕ **Addition**: Added Devvit installation settings for current Artemis controls, including flair enforcement, statistics updating, userflair gathering, NSFW/spoiler tagging, weekday flair schedules, and optional Discord alerts.
