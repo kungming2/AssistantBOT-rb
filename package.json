@@ -1,14 +1,14 @@
 {
   "private": true,
   "name": "assistantbot-rb",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "vite build",
     "deploy": "npm run type-check && npm run lint && devvit upload",
     "dev": "devvit playtest",
-    "launch": "npm run deploy && devvit publish",
+    "launch": "npm run type-check && npm run lint && devvit publish",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "login": "devvit login",
     "prettier": "prettier --write .",
@@ -18,10 +18,10 @@
     "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/start": "^0.13.4",
-    "@devvit/web": "^0.13.4",
+    "@devvit/start": "^0.13.9",
+    "@devvit/web": "^0.13.9",
     "@hono/node-server": "^2.0.3",
-    "devvit": "^0.13.4",
+    "devvit": "^0.13.9",
     "hono": "4.12.21",
     "js-yaml": "4.1.1"
   },

@@ -79,7 +79,9 @@ function legacyArchiveLink(subredditName: string): string {
   return `https://www.reddit.com/r/${subredditName}/wiki/${ARTEMIS_LEGACY_STATS_PAGE}`;
 }
 
-async function sendStatsWikiReadyNotification(subredditName: string): Promise<void> {
+async function sendStatsWikiReadyNotification(
+  subredditName: string
+): Promise<void> {
   if (await hasStatsWikiReadyNotificationBeenSent(subredditName)) {
     return;
   }
@@ -129,7 +131,9 @@ function unformatLegacyFlair(value: string): string {
   return trimmed.replace(/^\*\*(.*)\*\*$/, '$1');
 }
 
-function parseLegacyMonthlyPostStats(content: string): LegacyMonthlyPostStats[] {
+function parseLegacyMonthlyPostStats(
+  content: string
+): LegacyMonthlyPostStats[] {
   const months: LegacyMonthlyPostStats[] = [];
   const monthMatches = [...content.matchAll(/^### (\d{4}-\d{2})\s*$/gm)];
 
@@ -322,7 +326,10 @@ export async function initializeStatsWikiPage(
     const statsPage = await ensureStatsWikiPage(subredditName);
     await ensureLegacyStatsArchive(subredditName, statsPage);
   } catch (err) {
-    console.warn(`Artemis Stats Wiki: could not initialize r/${subredditName}.`, err);
+    console.warn(
+      `Artemis Stats Wiki: could not initialize r/${subredditName}.`,
+      err
+    );
     await sendStatsWikiSetupWarningNotification(subredditName);
     throw err;
   }
@@ -342,7 +349,11 @@ export async function updateStatsWikiPage(
       await Promise.all([
         collateOverallSection(),
         collateBotStatusSection(),
-        collatePostsSection(),
+        collatePostsSection({
+          ...(legacyArchive?.throughDate
+            ? { legacyThroughDate: legacyArchive.throughDate }
+            : {}),
+        }),
         collateSubscribersSection(),
       ]);
 
@@ -353,7 +364,10 @@ export async function updateStatsWikiPage(
       subscribersSection,
       versionNumber: ARTEMIS_STATS_VERSION,
       updatedAtUtc: timeConvertToString(nowSeconds()),
-      announcementSection: buildAnnouncementSection(subredditName, legacyArchive),
+      announcementSection: buildAnnouncementSection(
+        subredditName,
+        legacyArchive
+      ),
       navigationPrefix: '',
     });
 
@@ -365,7 +379,10 @@ export async function updateStatsWikiPage(
     });
     await sendStatsWikiReadyNotification(subredditName);
   } catch (err) {
-    console.warn(`Artemis Stats Wiki: could not update r/${subredditName}.`, err);
+    console.warn(
+      `Artemis Stats Wiki: could not update r/${subredditName}.`,
+      err
+    );
     await sendStatsWikiSetupWarningNotification(subredditName);
     throw err;
   }

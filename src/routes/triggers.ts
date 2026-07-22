@@ -6,7 +6,10 @@ import type {
   OnPostSubmitRequest,
   TriggerResponse,
 } from '@devvit/web/shared';
-import { handlePostFlairUpdated, handlePostSubmitted } from '../core/artemisPosts';
+import {
+  handlePostFlairUpdated,
+  handlePostSubmitted,
+} from '../core/artemisPosts';
 import {
   loadSubredditConfig,
   loadSubredditConfigWithSource,
@@ -39,7 +42,10 @@ async function initializeSubredditInstall(
     try {
       await initializeStatsWikiPage(subredditName);
     } catch (err) {
-      console.warn(`Artemis Install: statistics wiki setup failed for r/${subredditName}.`, err);
+      console.warn(
+        `Artemis Install: statistics wiki setup failed for r/${subredditName}.`,
+        err
+      );
     }
   }
   return configResult;
@@ -69,7 +75,10 @@ async function sendInstallOnboardingNotification(
         bodyMarkdown += msgModInstallNoPublicFlairsWarning(subredditName);
       }
     } catch (err) {
-      console.warn(`Artemis Install: could not check public flairs for r/${subredditName}.`, err);
+      console.warn(
+        `Artemis Install: could not check public flairs for r/${subredditName}.`,
+        err
+      );
     }
   }
 
@@ -150,6 +159,7 @@ triggers.post('/on-post-flair-update', async (c) => {
     await recordStatsPostFromTrigger({
       post: input.post,
       subredditName: input.subreddit?.name,
+      onlyIfTracked: true,
     });
   }
   await handlePostFlairUpdated({

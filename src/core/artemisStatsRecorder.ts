@@ -5,15 +5,25 @@ import { ARTEMIS_JOBS, ARTEMIS_SETTINGS } from './artemisSettings';
 import { loadSubredditConfig } from './artemisConfig';
 import { toT3 } from './artemisIds';
 import { getInstalledSubredditNames } from './artemisStorage';
-import { convertToString, convertToUnix, monthConvertToString, normalizeUnixSeconds } from './timekeeping';
 import {
+  convertToString,
+  convertToUnix,
+  monthConvertToString,
+  normalizeUnixSeconds,
+} from './timekeeping';
+import {
+  getStatsPostSnapshot,
+  listMonthlyPostAggregates,
+  listSubscriberSnapshots,
   listStatsPostSnapshots,
   recordStatsRun,
+  saveMonthlyPostAggregate,
   saveMonthlyTopCommentedPosts,
   saveMonthlyTopPosts,
   saveStatsPostSnapshot,
   saveSubscriberSnapshot,
   saveUserFlairAggregates,
+  type MonthlyPostAggregate,
   type MonthlyTopPost,
   type StatsPostSnapshot,
   type UserFlairAggregate,
@@ -50,14 +60,19 @@ function createdSeconds(date: Date): number {
   return Math.floor(date.getTime() / 1000);
 }
 
-function triggerSnapshot(post: TriggerPost, subredditName: string): StatsPostSnapshot {
+function triggerSnapshot(
+  post: TriggerPost,
+  subredditName: string
+): StatsPostSnapshot {
   return {
     postId: toT3(post.id),
     subredditName: subredditName.toLowerCase(),
     authorName: '',
     title: post.title,
     permalink: post.permalink,
-    createdAt: post.createdAt ? normalizeUnixSeconds(post.createdAt) : nowSeconds(),
+    createdAt: post.createdAt
+      ? normalizeUnixSeconds(post.createdAt)
+      : nowSeconds(),
     updatedAt: nowSeconds(),
     flairText: post.linkFlair?.text ?? '',
     flairTemplateId: post.linkFlair?.templateId ?? '',
@@ -87,9 +102,29 @@ function modelSnapshot(post: Post, subredditName: string): StatsPostSnapshot {
     removed: post.removed || post.spam,
     nsfw: post.nsfw,
     spoiler: post.spoiler,
-    isSelf: post.body !== undefined,
+    isSelf: isModelSelfPost(post),
     url: post.url,
   };
+}
+
+function normalizedRedditPath(value: string): string | undefined {
+  try {
+    return new URL(value, 'https://www.reddit.com').pathname
+      .replace(/\/$/, '')
+      .toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+function isModelSelfPost(post: Post): boolean {
+  const postPath = normalizedRedditPath(post.url);
+  const permalinkPath = normalizedRedditPath(post.permalink);
+  if (postPath && permalinkPath) {
+    return postPath === permalinkPath;
+  }
+
+  return Boolean(post.body);
 }
 
 function topPostSnapshot(post: Post): MonthlyTopPost {
@@ -124,6 +159,100 @@ function nextMonthStart(month: string): number {
   return Math.floor(Date.UTC(year, monthNumber, 1) / 1000);
 }
 
+function previousCalendarMonth(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))
+    .toISOString()
+    .slice(0, 7);
+}
+
+function monthRange(startMonth: string, endMonth: string): string[] {
+  const [startYear, startMonthNumber] = startMonth.split('-').map(Number);
+  const [endYear, endMonthNumber] = endMonth.split('-').map(Number);
+  if (
+    startYear === undefined ||
+    startMonthNumber === undefined ||
+    endYear === undefined ||
+    endMonthNumber === undefined
+  ) {
+    return [];
+  }
+
+  const months: string[] = [];
+  const cursor = new Date(Date.UTC(startYear, startMonthNumber - 1, 1));
+  const end = new Date(Date.UTC(endYear, endMonthNumber - 1, 1));
+  while (cursor <= end) {
+    months.push(cursor.toISOString().slice(0, 7));
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return months;
+}
+
+async function recordMonthlyPostAggregate(
+  subredditName: string,
+  month: string
+): Promise<void> {
+  const normalizedSubredditName = subredditName.toLowerCase();
+  const snapshots = await listStatsPostSnapshots({
+    start: convertToUnix(`${month}-01`),
+    end: nextMonthStart(month) - 1,
+    limit: ARTEMIS_SETTINGS.statsPostRetention,
+  });
+  const aggregate: MonthlyPostAggregate = {
+    month,
+    subredditName: normalizedSubredditName,
+    total: 0,
+    noFlair: 0,
+    removed: 0,
+    self: 0,
+    nsfw: 0,
+    spoiler: 0,
+    totalScore: 0,
+    totalComments: 0,
+    flairCounts: {},
+    updatedAt: nowSeconds(),
+  };
+
+  for (const snapshot of snapshots) {
+    if (snapshot.subredditName !== normalizedSubredditName) {
+      continue;
+    }
+    const flair = snapshot.flairText || 'None';
+    aggregate.total += 1;
+    aggregate.noFlair += snapshot.flairText || snapshot.flairTemplateId ? 0 : 1;
+    aggregate.removed += snapshot.removed ? 1 : 0;
+    aggregate.self += snapshot.isSelf ? 1 : 0;
+    aggregate.nsfw += snapshot.nsfw ? 1 : 0;
+    aggregate.spoiler += snapshot.spoiler ? 1 : 0;
+    aggregate.totalScore += snapshot.score;
+    aggregate.totalComments += snapshot.commentCount;
+    aggregate.flairCounts[flair] = (aggregate.flairCounts[flair] ?? 0) + 1;
+  }
+
+  await saveMonthlyPostAggregate(aggregate);
+}
+
+async function recordMissingCompletedMonthlyPostAggregates(
+  subredditName: string
+): Promise<void> {
+  const [subscriberSnapshots, storedAggregates] = await Promise.all([
+    listSubscriberSnapshots(),
+    listMonthlyPostAggregates(),
+  ]);
+  const earliestSnapshot = subscriberSnapshots.at(-1);
+  if (!earliestSnapshot) {
+    return;
+  }
+
+  const firstCoverageMonth = earliestSnapshot.date.slice(0, 7);
+  const lastCompletedMonth = previousCalendarMonth();
+  for (const month of monthRange(firstCoverageMonth, lastCompletedMonth)) {
+    if (!storedAggregates[month]) {
+      await recordMonthlyPostAggregate(subredditName, month);
+    }
+  }
+}
+
 async function recordMonthlyTopCommentedPosts(
   subredditName: string,
   month: string
@@ -135,7 +264,9 @@ async function recordMonthlyTopCommentedPosts(
     limit: ARTEMIS_SETTINGS.statsPostRetention,
   });
   const posts = snapshots
-    .filter((snapshot) => snapshot.subredditName === subredditName.toLowerCase())
+    .filter(
+      (snapshot) => snapshot.subredditName === subredditName.toLowerCase()
+    )
     .sort(
       (a, b) =>
         b.commentCount - a.commentCount ||
@@ -153,6 +284,7 @@ async function recordMonthlyTopCommentedPosts(
 export async function recordStatsPostFromTrigger(params: {
   post: PostV2 | undefined;
   subredditName: string | undefined;
+  onlyIfTracked?: boolean;
 }): Promise<void> {
   const post = params.post as TriggerPost | undefined;
   const subredditName = params.subredditName?.toLowerCase();
@@ -160,10 +292,23 @@ export async function recordStatsPostFromTrigger(params: {
     return;
   }
 
-  await saveStatsPostSnapshot(triggerSnapshot(post, subredditName));
+  const postId = toT3(post.id);
+  const existing = await getStatsPostSnapshot(postId);
+  if (params.onlyIfTracked && !existing) {
+    return;
+  }
+
+  const snapshot = triggerSnapshot(post, subredditName);
+  await saveStatsPostSnapshot({
+    ...snapshot,
+    authorName: existing?.authorName ?? snapshot.authorName,
+    removed: existing?.removed ?? snapshot.removed,
+  });
 }
 
-export async function recordRecentPostSnapshots(subredditName: string): Promise<void> {
+export async function recordRecentPostSnapshots(
+  subredditName: string
+): Promise<void> {
   const posts = await reddit
     .getNewPosts({
       subredditName,
@@ -238,12 +383,16 @@ async function collectSubredditUserFlairAggregates(
         continue;
       }
 
-      const flairLabel = userFlairLabel(userFlair.flairText ?? '', userFlair.flairCssClass ?? '');
+      const flairLabel = userFlairLabel(
+        userFlair.flairText ?? '',
+        userFlair.flairCssClass ?? ''
+      );
 
       assignmentRows += 1;
       usersWithFlairText += userFlair.flairText ? 1 : 0;
       usersWithCssClass += userFlair.flairCssClass ? 1 : 0;
-      usersWithBlankFlair += userFlair.flairText || userFlair.flairCssClass ? 0 : 1;
+      usersWithBlankFlair +=
+        userFlair.flairText || userFlair.flairCssClass ? 0 : 1;
       flairCounts.set(flairLabel, (flairCounts.get(flairLabel) ?? 0) + 1);
     }
 
@@ -334,13 +483,18 @@ async function updateUserFlairAggregatesForConfig(
   }
 }
 
-export async function recordSubredditUserFlairStats(subredditName: string): Promise<boolean> {
+export async function recordSubredditUserFlairStats(
+  subredditName: string
+): Promise<boolean> {
   const config = await loadSubredditConfig(subredditName);
   if (!config.statistics_updating_enabled) {
     return false;
   }
 
-  await updateUserFlairAggregatesForConfig(subredditName, config.userflair_gathering_enabled);
+  await updateUserFlairAggregatesForConfig(
+    subredditName,
+    config.userflair_gathering_enabled
+  );
   return true;
 }
 
@@ -355,6 +509,7 @@ export async function recordSubredditDailyStats(
 
   await recordRecentPostSnapshots(subredditName);
   await recordSubredditSubscriberSnapshot(subredditName, date);
+  await recordMissingCompletedMonthlyPostAggregates(subredditName);
   if (!config.userflair_gathering_enabled) {
     await saveUserFlairAggregates(subredditName, []);
   }
@@ -362,7 +517,9 @@ export async function recordSubredditDailyStats(
   return true;
 }
 
-export async function recordSubredditRecentPostStats(subredditName: string): Promise<boolean> {
+export async function recordSubredditRecentPostStats(
+  subredditName: string
+): Promise<boolean> {
   const config = await loadSubredditConfig(subredditName);
   if (!config.statistics_updating_enabled) {
     return false;
@@ -372,7 +529,9 @@ export async function recordSubredditRecentPostStats(subredditName: string): Pro
   return true;
 }
 
-export async function recordRecentPostStatsForInstalledSubreddits(): Promise<string[]> {
+export async function recordRecentPostStatsForInstalledSubreddits(): Promise<
+  string[]
+> {
   const subredditNames = await getInstalledSubredditNames();
   const updatedSubredditNames: string[] = [];
   for (const subredditName of subredditNames) {
@@ -383,7 +542,9 @@ export async function recordRecentPostStatsForInstalledSubreddits(): Promise<str
   return updatedSubredditNames;
 }
 
-export async function recordDailyStatsForInstalledSubreddits(): Promise<string[]> {
+export async function recordDailyStatsForInstalledSubreddits(): Promise<
+  string[]
+> {
   const subredditNames = await getInstalledSubredditNames();
   const updatedSubredditNames: string[] = [];
   for (const subredditName of subredditNames) {
@@ -394,7 +555,9 @@ export async function recordDailyStatsForInstalledSubreddits(): Promise<string[]
   return updatedSubredditNames;
 }
 
-export async function recordSubredditMonthlyStats(subredditName: string): Promise<boolean> {
+export async function recordSubredditMonthlyStats(
+  subredditName: string
+): Promise<boolean> {
   const config = await loadSubredditConfig(subredditName);
   if (!config.statistics_updating_enabled) {
     return false;
@@ -412,12 +575,18 @@ export async function recordSubredditMonthlyStats(subredditName: string): Promis
 
   await saveMonthlyTopPosts(month, posts.map(topPostSnapshot));
   await recordMonthlyTopCommentedPosts(subredditName, month);
-  await updateUserFlairAggregatesForConfig(subredditName, config.userflair_gathering_enabled);
+  await recordMonthlyPostAggregate(subredditName, month);
+  await updateUserFlairAggregatesForConfig(
+    subredditName,
+    config.userflair_gathering_enabled
+  );
   await recordStatsRun(ARTEMIS_JOBS.recordMonthlyStats, nowSeconds());
   return true;
 }
 
-export async function recordMonthlyStatsForInstalledSubreddits(): Promise<string[]> {
+export async function recordMonthlyStatsForInstalledSubreddits(): Promise<
+  string[]
+> {
   const subredditNames = await getInstalledSubredditNames();
   const updatedSubredditNames: string[] = [];
   for (const subredditName of subredditNames) {
@@ -428,7 +597,10 @@ export async function recordMonthlyStatsForInstalledSubreddits(): Promise<string
   return updatedSubredditNames;
 }
 
-export async function refreshStatsPost(postId: T3, subredditName: string): Promise<void> {
+export async function refreshStatsPost(
+  postId: T3,
+  subredditName: string
+): Promise<void> {
   const post = await reddit.getPostById(postId);
   await saveStatsPostSnapshot(modelSnapshot(post, subredditName));
 }

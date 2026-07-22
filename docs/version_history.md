@@ -35,7 +35,14 @@
 | 🐞 **Bug Fix**  | Bug fixes for issues.                                                                              |
 | 🕯️ **Removed** | Features or code handling that was removed.                                                        |
 
-### Devvit v1.0.2 (Current, 2026-07-01)
+### Devvit v1.0.5 (Current, 2026-07-22)
+
+* 🐞 **Bug Fix**: Legacy monthly totals are no longer combined with overlapping Devvit snapshots, and historical flair updates no longer create misleading partial month entries.
+* 🐞 **Bug Fix**: Text/self-post classification now uses the post URL and permalink rather than treating every defined post body as a self post.
+* 🔧 **Change**: Completed Devvit month aggregates are persisted and missing completed months are backfilled so published totals do not shrink with the rolling snapshot window.
+* 🔧 **Change**: Statistics output now identifies legacy, partial, completed, and month-to-date coverage; clarifies recorded metrics; totals truncated user-flair tables with an Other row; sorts top-post lists; and requires a longer subscriber history for milestone projections.
+
+### Devvit v1.0.2 (2026-07-01)
 
 * 🔧 **Change**: User flair statistics now group flair text by Reddit emoji references when emoji tags are present. For example, `:edu-ma: M.A.` and `:edu-ma: Ph.D Candidate` are counted together under `:edu-ma:`, while subreddits without emoji-style flair text continue using the previous full user flair text table.
 * 🔧 **Change**: Recent post snapshots for statistics now refresh hourly, reducing missed posts on higher-volume subreddits while keeping the statistics wiki rewrite on the daily schedule.

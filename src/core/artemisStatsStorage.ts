@@ -8,6 +8,7 @@ const STATS_POST_INDEX_KEY = 'artemis:stats:post-index';
 const STATS_SUBSCRIBERS_KEY = 'artemis:stats:subscribers';
 const STATS_MONTHLY_TOP_KEY = 'artemis:stats:monthly-top';
 const STATS_MONTHLY_TOP_COMMENTS_KEY = 'artemis:stats:monthly-top-comments';
+const STATS_MONTHLY_POSTS_KEY = 'artemis:stats:monthly-posts';
 const STATS_LEGACY_MONTHLY_POSTS_KEY = 'artemis:stats:legacy-monthly-posts';
 const STATS_USER_FLAIRS_KEY = 'artemis:stats:user-flairs';
 const STATS_LAST_RUN_KEY = 'artemis:stats:last-run';
@@ -53,6 +54,21 @@ export type MonthlyTopPost = {
   createdAt: number;
 };
 
+export type MonthlyPostAggregate = {
+  month: string;
+  subredditName: string;
+  total: number;
+  noFlair: number;
+  removed: number;
+  self: number;
+  nsfw: number;
+  spoiler: number;
+  totalScore: number;
+  totalComments: number;
+  flairCounts: Record<string, number>;
+  updatedAt: number;
+};
+
 export type LegacyMonthlyPostStats = {
   month: string;
   total: number;
@@ -72,15 +88,33 @@ function parseJson<T>(value: string | undefined): T | undefined {
   }
 }
 
-function normalizeStatsPostSnapshot(snapshot: StatsPostSnapshot): StatsPostSnapshot {
+function normalizeStatsPostSnapshot(
+  snapshot: StatsPostSnapshot
+): StatsPostSnapshot {
+  const postPath = normalizedRedditPath(snapshot.url);
+  const permalinkPath = normalizedRedditPath(snapshot.permalink);
   return {
     ...snapshot,
     createdAt: normalizeUnixSeconds(snapshot.createdAt),
     updatedAt: normalizeUnixSeconds(snapshot.updatedAt),
+    isSelf:
+      postPath && permalinkPath ? postPath === permalinkPath : snapshot.isSelf,
   };
 }
 
-export async function saveStatsPostSnapshot(snapshot: StatsPostSnapshot): Promise<void> {
+function normalizedRedditPath(value: string): string | undefined {
+  try {
+    return new URL(value, 'https://www.reddit.com').pathname
+      .replace(/\/$/, '')
+      .toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+export async function saveStatsPostSnapshot(
+  snapshot: StatsPostSnapshot
+): Promise<void> {
   const normalizedSnapshot = normalizeStatsPostSnapshot(snapshot);
   await redis.hSet(STATS_POSTS_KEY, {
     [normalizedSnapshot.postId]: JSON.stringify(normalizedSnapshot),
@@ -103,8 +137,19 @@ export async function saveStatsPostSnapshot(snapshot: StatsPostSnapshot): Promis
   }
 }
 
+export async function getStatsPostSnapshot(
+  postId: T3
+): Promise<StatsPostSnapshot | undefined> {
+  const snapshot = parseJson<StatsPostSnapshot>(
+    await redis.hGet(STATS_POSTS_KEY, postId)
+  );
+  return snapshot ? normalizeStatsPostSnapshot(snapshot) : undefined;
+}
+
 export async function markStatsPostRemoved(postId: T3): Promise<void> {
-  const snapshot = parseJson<StatsPostSnapshot>(await redis.hGet(STATS_POSTS_KEY, postId));
+  const snapshot = parseJson<StatsPostSnapshot>(
+    await redis.hGet(STATS_POSTS_KEY, postId)
+  );
   if (!snapshot) {
     return;
   }
@@ -116,11 +161,13 @@ export async function markStatsPostRemoved(postId: T3): Promise<void> {
   });
 }
 
-export async function listStatsPostSnapshots(options: {
-  start?: number;
-  end?: number;
-  limit?: number;
-} = {}): Promise<StatsPostSnapshot[]> {
+export async function listStatsPostSnapshots(
+  options: {
+    start?: number;
+    end?: number;
+    limit?: number;
+  } = {}
+): Promise<StatsPostSnapshot[]> {
   const limit = options.limit ?? ARTEMIS_SETTINGS.statsPostListingLimit;
   const indexedPosts =
     options.start !== undefined && options.end !== undefined
@@ -135,7 +182,9 @@ export async function listStatsPostSnapshots(options: {
 
   const snapshots: StatsPostSnapshot[] = [];
   for (const { member } of indexedPosts) {
-    const snapshot = parseJson<StatsPostSnapshot>(await redis.hGet(STATS_POSTS_KEY, member));
+    const snapshot = parseJson<StatsPostSnapshot>(
+      await redis.hGet(STATS_POSTS_KEY, member)
+    );
     if (snapshot) {
       snapshots.push(normalizeStatsPostSnapshot(snapshot));
     }
@@ -144,7 +193,10 @@ export async function listStatsPostSnapshots(options: {
   return snapshots;
 }
 
-export async function saveSubscriberSnapshot(date: string, count: number): Promise<void> {
+export async function saveSubscriberSnapshot(
+  date: string,
+  count: number
+): Promise<void> {
   await redis.hSet(STATS_SUBSCRIBERS_KEY, {
     [date]: String(count),
   });
@@ -164,7 +216,9 @@ export async function saveUserFlairAggregates(
   const normalizedSubredditName = subredditName.toLowerCase();
   const existing = await redis.hGetAll(STATS_USER_FLAIRS_KEY);
   const staleKeys = Object.keys(existing).filter(
-    (key) => key === normalizedSubredditName || key.startsWith(`${normalizedSubredditName}:`)
+    (key) =>
+      key === normalizedSubredditName ||
+      key.startsWith(`${normalizedSubredditName}:`)
   );
   if (staleKeys.length) {
     await redis.hDel(STATS_USER_FLAIRS_KEY, staleKeys);
@@ -206,13 +260,18 @@ export async function listUserFlairAggregates(): Promise<UserFlairAggregate[]> {
   });
 }
 
-export async function saveMonthlyTopPosts(month: string, posts: MonthlyTopPost[]): Promise<void> {
+export async function saveMonthlyTopPosts(
+  month: string,
+  posts: MonthlyTopPost[]
+): Promise<void> {
   await redis.hSet(STATS_MONTHLY_TOP_KEY, {
     [month]: JSON.stringify(posts),
   });
 }
 
-export async function listMonthlyTopPosts(): Promise<Record<string, MonthlyTopPost[]>> {
+export async function listMonthlyTopPosts(): Promise<
+  Record<string, MonthlyTopPost[]>
+> {
   const stored = await redis.hGetAll(STATS_MONTHLY_TOP_KEY);
   return Object.fromEntries(
     Object.entries(stored).map(([month, value]) => [
@@ -231,13 +290,35 @@ export async function saveMonthlyTopCommentedPosts(
   });
 }
 
-export async function listMonthlyTopCommentedPosts(): Promise<Record<string, MonthlyTopPost[]>> {
+export async function listMonthlyTopCommentedPosts(): Promise<
+  Record<string, MonthlyTopPost[]>
+> {
   const stored = await redis.hGetAll(STATS_MONTHLY_TOP_COMMENTS_KEY);
   return Object.fromEntries(
     Object.entries(stored).map(([month, value]) => [
       month,
       parseJson<MonthlyTopPost[]>(value) ?? [],
     ])
+  );
+}
+
+export async function saveMonthlyPostAggregate(
+  aggregate: MonthlyPostAggregate
+): Promise<void> {
+  await redis.hSet(STATS_MONTHLY_POSTS_KEY, {
+    [aggregate.month]: JSON.stringify(aggregate),
+  });
+}
+
+export async function listMonthlyPostAggregates(): Promise<
+  Record<string, MonthlyPostAggregate>
+> {
+  const stored = await redis.hGetAll(STATS_MONTHLY_POSTS_KEY);
+  return Object.fromEntries(
+    Object.entries(stored).flatMap(([month, value]) => {
+      const aggregate = parseJson<MonthlyPostAggregate>(value);
+      return aggregate ? [[month, aggregate]] : [];
+    })
   );
 }
 
@@ -266,7 +347,10 @@ export async function listLegacyMonthlyPostStats(): Promise<
   );
 }
 
-export async function recordStatsRun(jobName: string, timestamp: number): Promise<void> {
+export async function recordStatsRun(
+  jobName: string,
+  timestamp: number
+): Promise<void> {
   await redis.hSet(STATS_LAST_RUN_KEY, {
     [jobName]: String(timestamp),
   });
