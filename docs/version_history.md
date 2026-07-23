@@ -23,24 +23,28 @@
 | Katsura      | 2.1         | 2021-01-08 |
 | Laurel       | 2.2         | 2021-04-22 |
 | Maple        | 2.3         | 2021-06-22 |
-| **Neem**         | Devvit 1.0  | 2026-07-01 |
+| **Neem**     | Devvit 1.0  | 2026-07-01 |
 
 ## Change Log
 
 | Change Log Tag  | Description                                                                                        |
 |-----------------|----------------------------------------------------------------------------------------------------|
 | 🆕 **Feature**  | A key new feature or change of the bot, one that usually merits a version change.                  |
-| ➕ **Addition**  | Refinements to existing features of the bot to improve usability, usually noticeable by redditors. |
+| ➕ **Addition** | Refinements to existing features of the bot to improve usability, usually noticeable by redditors. |
 | 🔧 **Change**   | Changes to how the bot operates, usually not noticeable by redditors.                              |
 | 🐞 **Bug Fix**  | Bug fixes for issues.                                                                              |
-| 🕯️ **Removed** | Features or code handling that was removed.                                                        |
+| 🕯️ **Removed**  | Features or code handling that was removed.                                                        |
 
-### Devvit v1.0.5 (Current, 2026-07-22)
+### Devvit v1.0.6 (Current, 2026-07-23)
 
-* 🐞 **Bug Fix**: Legacy monthly totals are no longer combined with overlapping Devvit snapshots, and historical flair updates no longer create misleading partial month entries.
-* 🐞 **Bug Fix**: Text/self-post classification now uses the post URL and permalink rather than treating every defined post body as a self post.
+* 🆕 **Feature**: Submitted for public listing.
+
+### Devvit v1.0.5 (2026-07-22)
+
 * 🔧 **Change**: Completed Devvit month aggregates are persisted and missing completed months are backfilled so published totals do not shrink with the rolling snapshot window.
 * 🔧 **Change**: Statistics output now identifies legacy, partial, completed, and month-to-date coverage; clarifies recorded metrics; totals truncated user-flair tables with an Other row; sorts top-post lists; and requires a longer subscriber history for milestone projections.
+* 🐞 **Bug Fix**: Legacy monthly totals are no longer combined with overlapping Devvit snapshots, and historical flair updates no longer create misleading partial month entries.
+* 🐞 **Bug Fix**: Text/self-post classification now uses the post URL and permalink rather than treating every defined post body as a self post.
 
 ### Devvit v1.0.2 (2026-07-01)
 

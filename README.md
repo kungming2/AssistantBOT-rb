@@ -153,6 +153,7 @@ AssistantBOT Reborn is licensed under the [MIT License](LICENSE).
 
 This is an abbreviated changelog for Reddit app review and to see changes at a glance.
 
+- **1.0.6**: Submitted AssistantBOT Reborn for public listing.
 - **1.0.5**: Corrected legacy/Devvit statistics coverage, preserved completed monthly aggregates, and clarified partial-period, flair, post-type, ranking, and subscriber-projection output.
 - **1.0.2**: Refined statistics collection and display, including hourly recent-post snapshots, grouped emoji-style user flair statistics, and clearer `None` formatting for missing post flair.
 - **1.0.0**: Rebuilt Artemis as an installable Devvit app with trigger-based flair enforcement, Devvit installation settings, scheduled statistics updates, moderator-only menu actions, optional Discord alerts, and legacy statistics archiving.
