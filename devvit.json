@@ -81,173 +81,204 @@
   },
   "settings": {
     "subreddit": {
-      "flair_enforcement_enabled": {
-        "type": "boolean",
-        "label": "Enable Flair Enforcement",
-        "helpText": "Enabling this option will allow Artemis to remind users about missing post flair and optionally, to remove unflaired posts."
+      "flair_enforcement": {
+        "type": "group",
+        "label": "Flair Enforcement",
+        "fields": {
+          "flair_enforcement_enabled": {
+            "type": "boolean",
+            "label": "Enable Flair Enforcement",
+            "helpText": "Enabling this option will allow Artemis to remind users about missing post flair and optionally, to remove unflaired posts."
+          },
+          "flair_enforce_remove_posts": {
+            "type": "boolean",
+            "label": "Remove Unflaired Posts",
+            "helpText": "Only applies when flair enforcement is enabled. Remove posts that were not unflaired; when disabled, Artemis sends flair reminder messages without removing posts."
+          },
+          "flair_enforce_moderators": {
+            "type": "boolean",
+            "label": "Enforce Flair on Moderator Posts",
+            "helpText": "Apply flair enforcement settings to posts made by subreddit moderators. By default, Artemis will not enforce flair for moderators."
+          },
+          "flair_enforce_approve_posts": {
+            "type": "boolean",
+            "label": "Automatically Approve Flaired Posts",
+            "helpText": "Automatically approve posts that Artemis has previously removed once they receive a post flair. Only applies when unflaired post removal is enabled. Disabling this will mean that moderators must manually approve removed posts."
+          },
+          "flair_enforce_custom_message": {
+            "type": "paragraph",
+            "label": "Custom Flair Reminder Message",
+            "helpText": "Provide custom text to include in the bot's flair reminder messages. Text over 500 characters will be truncated. (optional)"
+          },
+          "custom_goodbye": {
+            "type": "paragraph",
+            "label": "Custom Goodbye",
+            "helpText": "A short sign-off text used in flair reminder messages. Text over 20 characters are truncated. Lowercase is suggested. (optional)"
+          },
+          "flair_enforce_whitelist": {
+            "type": "paragraph",
+            "label": "Flair Enforcement Username Whitelist",
+            "helpText": "Exclude these usernames from being subject to flair enforcement. Separate usernames with commas or new lines. Do not include u/. (optional)"
+          }
+        }
       },
-      "statistics_updating_enabled": {
-        "type": "boolean",
-        "label": "Enable Statistics Updating",
-        "defaultValue": true,
-        "helpText": "Allow Artemis to run daily and monthly statistics updates, including the manual statistics page refresh. When disabled, Artemis skips statistics collection and wiki updates."
+      "automatic_post_tags": {
+        "type": "group",
+        "label": "Automatic Post Tags",
+        "fields": {
+          "flair_tag_nsfw": {
+            "type": "paragraph",
+            "label": "Auto-NSFW Flair Template IDs",
+            "helpText": "Post flair template IDs listed here will be automatically tagged as 'NSFW'. Separate IDs with commas or new lines. (optional)"
+          },
+          "flair_tag_spoiler": {
+            "type": "paragraph",
+            "label": "Auto-Spoiler Flair Template IDs",
+            "helpText": "Post flair template IDs listed here will be automatically tagged as 'spoiler'. Separate IDs with commas or new lines. (optional)"
+          }
+        }
       },
-      "userflair_gathering_enabled": {
-        "type": "boolean",
-        "label": "Enable Userflair Gathering",
-        "helpText": "Allow Artemis to gather user flair assignments during monthly statistics updates and manual statistics page refreshes. When disabled, Artemis clears stored user flair snapshots and skips user flair enumeration."
+      "flair_schedules": {
+        "type": "group",
+        "label": "Flair Schedules",
+        "helpText": "Limit selected post flairs to specific days of the week.",
+        "fields": {
+          "flair_schedule_rule_1_ids": {
+            "type": "paragraph",
+            "label": "Flair Schedule 1: Template IDs",
+            "helpText": "Optional. Artemis allows up to five groups of flairs to only be allowed on certain days. For example, a 'Memes' flair can be allowed only on Mondays, or a 'Self-Promotion' flair only on Sundays. Enter post flair template IDs for this schedule, separated with commas or new lines."
+          },
+          "flair_schedule_rule_1_days": {
+            "type": "multiSelect",
+            "label": "Flair Schedule 1: Allowed Days",
+            "helpText": "Days when these flair templates are allowed.",
+            "options": [
+              { "label": "Sunday", "value": "Sun" },
+              { "label": "Monday", "value": "Mon" },
+              { "label": "Tuesday", "value": "Tue" },
+              { "label": "Wednesday", "value": "Wed" },
+              { "label": "Thursday", "value": "Thu" },
+              { "label": "Friday", "value": "Fri" },
+              { "label": "Saturday", "value": "Sat" }
+            ]
+          },
+          "flair_schedule_rule_2_ids": {
+            "type": "paragraph",
+            "label": "Flair Schedule 2: Template IDs",
+            "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
+          },
+          "flair_schedule_rule_2_days": {
+            "type": "multiSelect",
+            "label": "Flair Schedule 2: Allowed Days",
+            "helpText": "Days when these flair templates are allowed.",
+            "options": [
+              { "label": "Sunday", "value": "Sun" },
+              { "label": "Monday", "value": "Mon" },
+              { "label": "Tuesday", "value": "Tue" },
+              { "label": "Wednesday", "value": "Wed" },
+              { "label": "Thursday", "value": "Thu" },
+              { "label": "Friday", "value": "Fri" },
+              { "label": "Saturday", "value": "Sat" }
+            ]
+          },
+          "flair_schedule_rule_3_ids": {
+            "type": "paragraph",
+            "label": "Flair Schedule 3: Template IDs",
+            "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
+          },
+          "flair_schedule_rule_3_days": {
+            "type": "multiSelect",
+            "label": "Flair Schedule 3: Allowed Days",
+            "helpText": "Days when these flair templates are allowed.",
+            "options": [
+              { "label": "Sunday", "value": "Sun" },
+              { "label": "Monday", "value": "Mon" },
+              { "label": "Tuesday", "value": "Tue" },
+              { "label": "Wednesday", "value": "Wed" },
+              { "label": "Thursday", "value": "Thu" },
+              { "label": "Friday", "value": "Fri" },
+              { "label": "Saturday", "value": "Sat" }
+            ]
+          },
+          "flair_schedule_rule_4_ids": {
+            "type": "paragraph",
+            "label": "Flair Schedule 4: Template IDs",
+            "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
+          },
+          "flair_schedule_rule_4_days": {
+            "type": "multiSelect",
+            "label": "Flair Schedule 4: Allowed Days",
+            "helpText": "Days when these flair templates are allowed.",
+            "options": [
+              { "label": "Sunday", "value": "Sun" },
+              { "label": "Monday", "value": "Mon" },
+              { "label": "Tuesday", "value": "Tue" },
+              { "label": "Wednesday", "value": "Wed" },
+              { "label": "Thursday", "value": "Thu" },
+              { "label": "Friday", "value": "Fri" },
+              { "label": "Saturday", "value": "Sat" }
+            ]
+          },
+          "flair_schedule_rule_5_ids": {
+            "type": "paragraph",
+            "label": "Flair Schedule 5: Template IDs",
+            "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
+          },
+          "flair_schedule_rule_5_days": {
+            "type": "multiSelect",
+            "label": "Flair Schedule 5: Allowed Days",
+            "helpText": "Days when these flair templates are allowed.",
+            "options": [
+              { "label": "Sunday", "value": "Sun" },
+              { "label": "Monday", "value": "Mon" },
+              { "label": "Tuesday", "value": "Tue" },
+              { "label": "Wednesday", "value": "Wed" },
+              { "label": "Thursday", "value": "Thu" },
+              { "label": "Friday", "value": "Fri" },
+              { "label": "Saturday", "value": "Sat" }
+            ]
+          }
+        }
       },
-      "discord_webhook_url": {
-        "type": "string",
-        "label": "Discord Webhook URL",
-        "helpText": "Discord webhook URL for optional Artemis alerts.",
-        "placeholder": "https://discord.com/api/webhooks/...",
-        "validationEndpoint": "/internal/settings/validate-discord-webhook-url"
+      "statistics": {
+        "type": "group",
+        "label": "Statistics",
+        "fields": {
+          "statistics_updating_enabled": {
+            "type": "boolean",
+            "label": "Enable Statistics Updating",
+            "defaultValue": true,
+            "helpText": "Allow Artemis to run daily and monthly statistics updates, including the manual statistics page refresh. When disabled, Artemis skips statistics collection and wiki updates."
+          },
+          "userflair_gathering_enabled": {
+            "type": "boolean",
+            "label": "Enable Userflair Gathering",
+            "helpText": "Allow Artemis to gather user flair assignments during monthly statistics updates and manual statistics page refreshes. When disabled, Artemis clears stored user flair snapshots and skips user flair enumeration."
+          }
+        }
       },
-      "discord_alert_flair_actions_enabled": {
-        "type": "boolean",
-        "label": "Send Discord Flair Action Alerts",
-        "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, approves a previously removed flaired post, or completes the recent-post flair refresh menu action. Requires a Discord webhook URL above."
-      },
-      "discord_alert_statistics_enabled": {
-        "type": "boolean",
-        "label": "Send Discord Statistics Alerts",
-        "helpText": "Send a Discord alert after a daily, monthly, or manual statistics update finishes. Requires a Discord webhook URL above."
-      },
-      "flair_enforce_remove_posts": {
-        "type": "boolean",
-        "label": "Remove Unflaired Posts",
-        "helpText": "Only applies when flair enforcement is enabled. Remove posts that were not unflaired; when disabled, Artemis sends flair reminder messages without removing posts."
-      },
-      "flair_enforce_moderators": {
-        "type": "boolean",
-        "label": "Enforce Flair on Moderator Posts",
-        "helpText": "Apply flair enforcement settings to posts made by subreddit moderators. By default, Artemis will not enforce flair for moderators."
-      },
-      "flair_enforce_approve_posts": {
-        "type": "boolean",
-        "label": "Automatically Approve Flaired Posts",
-        "helpText": "Automatically approve posts that Artemis has previously removed once they receive a post flair. Only applies when unflaired post removal is enabled. Disabling this will mean that moderators must manually approve removed posts."
-      },
-      "flair_enforce_custom_message": {
-        "type": "paragraph",
-        "label": "Custom Flair Reminder Message",
-        "helpText": "Provide custom text to include in the bot's flair reminder messages. Text over 500 characters will be truncated. (optional)"
-      },
-      "custom_goodbye": {
-        "type": "paragraph",
-        "label": "Custom Goodbye",
-        "helpText": "A short sign-off text used in flair reminder messages. Text over 20 characters are truncated. Lowercase is suggested. (optional)"
-      },
-      "flair_enforce_whitelist": {
-        "type": "paragraph",
-        "label": "Flair Enforcement Username Whitelist",
-        "helpText": "Exclude these usernames from being subject to flair enforcement. Separate usernames with commas or new lines. Do not include u/. (optional)"
-      },
-      "flair_tag_nsfw": {
-        "type": "paragraph",
-        "label": "Auto-NSFW Flair Template IDs",
-        "helpText": "Post flair template IDs listed here will be automatically tagged as 'NSFW'. Separate IDs with commas or new lines. (optional)"
-      },
-      "flair_tag_spoiler": {
-        "type": "paragraph",
-        "label": "Auto-Spoiler Flair Template IDs",
-        "helpText": "Post flair template IDs listed here will be automatically tagged as 'spoiler'. Separate IDs with commas or new lines. (optional)"
-      },
-      "flair_schedule_rule_1_ids": {
-        "type": "paragraph",
-        "label": "Flair Schedule 1: Template IDs",
-        "helpText": "Optional. Artemis allows up to five groups of flairs to only be allowed on certain days. For example, a 'Memes' flair can be allowed only on Mondays, or a 'Self-Promotion' flair only on Sundays. Enter post flair template IDs for this schedule, separated with commas or new lines."
-      },
-      "flair_schedule_rule_1_days": {
-        "type": "multiSelect",
-        "label": "Flair Schedule 1: Allowed Days",
-        "helpText": "Days when these flair templates are allowed.",
-        "options": [
-          { "label": "Sunday", "value": "Sun" },
-          { "label": "Monday", "value": "Mon" },
-          { "label": "Tuesday", "value": "Tue" },
-          { "label": "Wednesday", "value": "Wed" },
-          { "label": "Thursday", "value": "Thu" },
-          { "label": "Friday", "value": "Fri" },
-          { "label": "Saturday", "value": "Sat" }
-        ]
-      },
-      "flair_schedule_rule_2_ids": {
-        "type": "paragraph",
-        "label": "Flair Schedule 2: Template IDs",
-        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
-      },
-      "flair_schedule_rule_2_days": {
-        "type": "multiSelect",
-        "label": "Flair Schedule 2: Allowed Days",
-        "helpText": "Days when these flair templates are allowed.",
-        "options": [
-          { "label": "Sunday", "value": "Sun" },
-          { "label": "Monday", "value": "Mon" },
-          { "label": "Tuesday", "value": "Tue" },
-          { "label": "Wednesday", "value": "Wed" },
-          { "label": "Thursday", "value": "Thu" },
-          { "label": "Friday", "value": "Fri" },
-          { "label": "Saturday", "value": "Sat" }
-        ]
-      },
-      "flair_schedule_rule_3_ids": {
-        "type": "paragraph",
-        "label": "Flair Schedule 3: Template IDs",
-        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
-      },
-      "flair_schedule_rule_3_days": {
-        "type": "multiSelect",
-        "label": "Flair Schedule 3: Allowed Days",
-        "helpText": "Days when these flair templates are allowed.",
-        "options": [
-          { "label": "Sunday", "value": "Sun" },
-          { "label": "Monday", "value": "Mon" },
-          { "label": "Tuesday", "value": "Tue" },
-          { "label": "Wednesday", "value": "Wed" },
-          { "label": "Thursday", "value": "Thu" },
-          { "label": "Friday", "value": "Fri" },
-          { "label": "Saturday", "value": "Sat" }
-        ]
-      },
-      "flair_schedule_rule_4_ids": {
-        "type": "paragraph",
-        "label": "Flair Schedule 4: Template IDs",
-        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
-      },
-      "flair_schedule_rule_4_days": {
-        "type": "multiSelect",
-        "label": "Flair Schedule 4: Allowed Days",
-        "helpText": "Days when these flair templates are allowed.",
-        "options": [
-          { "label": "Sunday", "value": "Sun" },
-          { "label": "Monday", "value": "Mon" },
-          { "label": "Tuesday", "value": "Tue" },
-          { "label": "Wednesday", "value": "Wed" },
-          { "label": "Thursday", "value": "Thu" },
-          { "label": "Friday", "value": "Fri" },
-          { "label": "Saturday", "value": "Sat" }
-        ]
-      },
-      "flair_schedule_rule_5_ids": {
-        "type": "paragraph",
-        "label": "Flair Schedule 5: Template IDs",
-        "helpText": "Post flair template IDs for this schedule. Separate IDs with commas or new lines."
-      },
-      "flair_schedule_rule_5_days": {
-        "type": "multiSelect",
-        "label": "Flair Schedule 5: Allowed Days",
-        "helpText": "Days when these flair templates are allowed.",
-        "options": [
-          { "label": "Sunday", "value": "Sun" },
-          { "label": "Monday", "value": "Mon" },
-          { "label": "Tuesday", "value": "Tue" },
-          { "label": "Wednesday", "value": "Wed" },
-          { "label": "Thursday", "value": "Thu" },
-          { "label": "Friday", "value": "Fri" },
-          { "label": "Saturday", "value": "Sat" }
-        ]
+      "discord_notifications": {
+        "type": "group",
+        "label": "Discord Notifications",
+        "fields": {
+          "discord_webhook_url": {
+            "type": "string",
+            "label": "Discord Webhook URL",
+            "helpText": "Discord webhook URL for optional Artemis alerts.",
+            "placeholder": "https://discord.com/api/webhooks/...",
+            "validationEndpoint": "/internal/settings/validate-discord-webhook-url"
+          },
+          "discord_alert_flair_actions_enabled": {
+            "type": "boolean",
+            "label": "Send Discord Flair Action Alerts",
+            "helpText": "Send a Discord alert after Artemis sends a flair reminder, removes a post for flair rules, approves a previously removed flaired post, or completes the recent-post flair refresh menu action. Requires a Discord webhook URL above."
+          },
+          "discord_alert_statistics_enabled": {
+            "type": "boolean",
+            "label": "Send Discord Statistics Alerts",
+            "helpText": "Send a Discord alert after a daily, monthly, or manual statistics update finishes. Requires a Discord webhook URL above."
+          }
+        }
       }
     }
   },

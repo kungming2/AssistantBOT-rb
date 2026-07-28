@@ -35,7 +35,12 @@
 | 🐞 **Bug Fix**  | Bug fixes for issues.                                                                              |
 | 🕯️ **Removed**  | Features or code handling that was removed.                                                        |
 
-### Devvit v1.0.6 (Current, 2026-07-23)
+### Devvit v1.0.8 (Current, 2026-07-27)
+
+* ➕ **Addition**: Organized subreddit settings into labeled groups for flair enforcement, automatic post tags, flair schedules, statistics, and Discord notifications.
+* 🔧 **Change**: Updated the Devvit dependencies to 0.13.10.
+
+### Devvit v1.0.6 (2026-07-23)
 
 * 🆕 **Feature**: Submitted for public listing.
 

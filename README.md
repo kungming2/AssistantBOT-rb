@@ -57,24 +57,38 @@ Open the Devvit app installation settings page for the subreddit:
 https://developers.reddit.com/r/<subreddit>/apps/assistantbot-rb
 ```
 
-Current settings:
+Current settings are organized into labeled groups:
+
+### Flair Enforcement
 
 - **Enable Flair Enforcement** (`flair_enforcement_enabled`): turns flair enforcement on or off.
-- **Enable Statistics Updating** (`statistics_updating_enabled`): turns scheduled statistics updates, manual statistics page refreshes, and manual user flair statistics refreshes on or off. This is enabled by default.
-- **Enable Userflair Gathering** (`userflair_gathering_enabled`): gathers aggregate user flair assignment counts during monthly statistics updates and manual statistics refreshes. This only applies when statistics updating is enabled.
-- **Discord Webhook URL** (`discord_webhook_url`): Discord webhook URL for optional Artemis alerts. This per-subreddit setting is visible to moderators who can manage app settings.
-- **Send Discord Flair Action Alerts** (`discord_alert_flair_actions_enabled`): sends Discord alerts after flair reminders, flair-rule removals, flaired-post approvals, or recent-post flair refreshes. Requires a Discord webhook URL.
-- **Send Discord Statistics Alerts** (`discord_alert_statistics_enabled`): sends Discord alerts after daily, monthly, or manual statistics updates finish. Requires a Discord webhook URL.
 - **Remove Unflaired Posts** (`flair_enforce_remove_posts`): removes posts that remain unflaired. If disabled, Artemis can still send flair reminder messages.
 - **Enforce Flair on Moderator Posts** (`flair_enforce_moderators`): applies flair enforcement to posts made by subreddit moderators.
 - **Automatically Approve Flaired Posts** (`flair_enforce_approve_posts`): approves posts Artemis removed after they receive an allowed flair. This only applies when unflaired post removal is enabled. Posts removed for a disallowed-day scheduled flair are not automatically restored after later flair changes.
 - **Custom Flair Reminder Message** (`flair_enforce_custom_message`): custom text included in flair reminder messages.
 - **Custom Goodbye** (`custom_goodbye`): custom sign-off used in flair reminder messages.
 - **Flair Enforcement Username Whitelist** (`flair_enforce_whitelist`): users who should not receive flair enforcement. Do not include `u/`.
+
+### Automatic Post Tags
+
 - **Auto-NSFW Flair Template IDs** (`flair_tag_nsfw`): post flair template IDs that should mark matching posts as NSFW.
 - **Auto-Spoiler Flair Template IDs** (`flair_tag_spoiler`): post flair template IDs that should mark matching posts as spoilers.
+
+### Flair Schedules
+
 - **Flair Schedule 1-5: Template IDs** (`flair_schedule_rule_1_ids` through `flair_schedule_rule_5_ids`): optional post flair template IDs for up to five schedule rules.
 - **Flair Schedule 1-5: Allowed Days** (`flair_schedule_rule_1_days` through `flair_schedule_rule_5_days`): days when each schedule rule's flair IDs are allowed.
+
+### Statistics
+
+- **Enable Statistics Updating** (`statistics_updating_enabled`): turns scheduled statistics updates, manual statistics page refreshes, and manual user flair statistics refreshes on or off. This is enabled by default.
+- **Enable Userflair Gathering** (`userflair_gathering_enabled`): gathers aggregate user flair assignment counts during monthly statistics updates and manual statistics refreshes. This only applies when statistics updating is enabled.
+
+### Discord Notifications
+
+- **Discord Webhook URL** (`discord_webhook_url`): Discord webhook URL for optional Artemis alerts. This per-subreddit setting is visible to moderators who can manage app settings.
+- **Send Discord Flair Action Alerts** (`discord_alert_flair_actions_enabled`): sends Discord alerts after flair reminders, flair-rule removals, flaired-post approvals, or recent-post flair refreshes. Requires a Discord webhook URL.
+- **Send Discord Statistics Alerts** (`discord_alert_statistics_enabled`): sends Discord alerts after daily, monthly, or manual statistics updates finish. Requires a Discord webhook URL.
 
 For settings that ask for post flair template IDs, use the subreddit post flair management page:
 
@@ -153,6 +167,7 @@ AssistantBOT Reborn is licensed under the [MIT License](LICENSE).
 
 This is an abbreviated changelog for Reddit app review and to see changes at a glance.
 
+- **1.0.8**: Updated to Devvit 0.13.10 and organized subreddit settings into labeled groups for easier navigation.
 - **1.0.6**: Submitted AssistantBOT Reborn for public listing.
 - **1.0.5**: Corrected legacy/Devvit statistics coverage, preserved completed monthly aggregates, and clarified partial-period, flair, post-type, ranking, and subscriber-projection output.
 - **1.0.2**: Refined statistics collection and display, including hourly recent-post snapshots, grouped emoji-style user flair statistics, and clearer `None` formatting for missing post flair.
